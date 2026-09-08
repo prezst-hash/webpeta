@@ -3,66 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peta dari Google Sheets</title>
+    <title>Dashboard SPKLU</title>
     
-    <!-- CSS untuk Leaflet (Peta) -->
+    <!-- CSS Leaflet untuk Peta -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        body { margin: 0; padding: 0; }
-        /* Mengatur ukuran peta agar memenuhi layar */
-        #map { width: 100vw; height: 100vh; } 
+        :root {
+            --pln-blue: #005a9c;
+            --pln-cyan: #00a2e9;
+            --pln-yellow: #fdb913;
+            --bg-color: #f4f7f6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        /* Header & KPI */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--pln-blue);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .title-area h1 {
+            color: var(--pln-blue);
+            margin: 0;
+            font-size: 28px;
+        }
+        .kpi-area {
+            display: flex;
+            gap: 20px;
+        }
+        .kpi-card {
+            text-align: center;
+            padding: 10px 20px;
+            border-left: 1px solid #ddd;
+        }
+        .kpi-card h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .kpi-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--pln-blue);
+        }
+        /* Konten Utama: 2 Kolom */
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .panel-header {
+            background-color: var(--pln-blue);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .panel-body {
+            padding: 15px;
+            height: 400px; /* Tinggi seragam untuk grafik dan peta */
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+        }
+        /* Legenda Peta */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot.ultra { background: #9c27b0; }
+        .dot.fast { background: #ff9800; }
+        .dot.medium { background: #00a2e9; }
     </style>
 </head>
 <body>
 
-    <!-- Container Peta -->
-    <div id="map"></div>
+<div class="dashboard-container">
+    <!-- Bagian Atas: Judul dan KPI -->
+    <div class="header-section">
+        <div class="title-area">
+            <h1>PETA & TRANSAKSI</h1>
+            <h1>SPKLU PLN</h1>
+        </div>
+        <div class="kpi-area">
+            <div class="kpi-card">
+                <h3>TOTAL kWh</h3>
+                <div class="value" id="kpi-kwh">0</div>
+            </div>
+            <div class="kpi-card">
+                <h3>TOTAL TRANSAKSI</h3>
+                <div class="value" id="kpi-transaksi">0</div>
+            </div>
+            <div class="kpi-card">
+                <h3>TOTAL LOKASI SPKLU</h3>
+                <div class="value" id="kpi-spklu">0</div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Script Leaflet (Peta) -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Script PapaParse (Untuk membaca CSV Google Sheets) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Bagian Bawah: Grafik dan Peta -->
+    <div class="main-content">
+        <!-- Panel Grafik Top 10 -->
+        <div class="panel">
+            <div class="panel-header">TOP 10 TERTINGGI PEMAKAIAN KWH</div>
+            <div class="panel-body">
+                <canvas id="topChart"></canvas>
+            </div>
+        </div>
 
-    <script>
-        // 1. Inisialisasi Peta (Koordinat awal diatur ke Pontianak)
-        const map = L.map('map').setView([-0.0227, 109.3346], 13);
+        <!-- Panel Peta Sebaran -->
+        <div class="panel">
+            <div class="panel-header">PETA SEBARAN SPKLU</div>
+            <div class="panel-body">
+                <div id="map"></div>
+                <div class="legend">
+                    <div class="legend-item"><span class="dot ultra"></span> Ultra Fast Charger</div>
+                    <div class="legend-item"><span class="dot fast"></span> Fast Charger</div>
+                    <div class="legend-item"><span class="dot medium"></span> Medium Charger</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        // 2. Tambahkan layer peta dari OpenStreetMap (Gratis)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        // 3. Masukkan LINK CSV dari Google Sheets Anda di sini
-        // GANTI LINK DI BAWAH INI DENGAN LINK PUBLISH TO WEB MILIK ANDA
-        const googleSheetsCsvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
+<script>
+    // 1. INISIALISASI PETA (Fokus ke wilayah Kalimantan Barat)
+    const map = L.map('map').setView([-0.0227, 109.3346], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
 
-        // 4. Ambil data dari Google Sheets dan tampilkan di peta
-        Papa.parse(googleSheetsCsvUrl, {
-            download: true,
-            header: true,
-            complete: function(results) {
-                const data = results.data;
-                
-                // Looping data dari spreadsheet
-                data.forEach(row => {
-                    // Pastikan baris memiliki Latitude dan Longitude
-                    if (row.Lat && row.Lng) {
-                        // Tambahkan Marker ke peta
-                        const marker = L.marker([row.Lat, row.Lng]).addTo(map);
-                        
-                        // Tambahkan Popup saat marker diklik
-                        marker.bindPopup(`
-                            <b>${row.Nama}</b><br>
-                            ${row.Deskripsi}
-                        `);
+    // Fungsi warna marker berdasarkan Tipe Charger
+    function getMarkerColor(tipe) {
+        if (tipe === 'Ultra Fast') return '#9c27b0';
+        if (tipe === 'Fast') return '#ff9800';
+        return '#00a2e9'; // Default / Medium
+    }
+
+    // 2. AMBIL DATA DARI GOOGLE SHEETS
+    // GANTI LINK DI BAWAH DENGAN LINK CSV PUBLISH TO WEB ANDA
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
+
+    Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true, // Otomatis mengubah angka teks menjadi format angka (number)
+        complete: function(results) {
+            const data = results.data.filter(row => row.Nama_SPKLU); // Buang baris kosong
+
+            // --- A. OLAH DATA UNTUK KPI (INFOGRAFIS ATAS) ---
+            let totalKwh = 0;
+            let totalTransaksi = 0;
+            
+            data.forEach(row => {
+                totalKwh += row.Pemakaian_kWh || 0;
+                totalTransaksi += row.Total_Transaksi || 0;
+            });
+
+            // Tampilkan ke HTML dengan format ribuan
+            document.getElementById('kpi-kwh').innerText = totalKwh.toLocaleString('id-ID');
+            document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID');
+            document.getElementById('kpi-spklu').innerText = data.length;
+
+            // --- B. OLAH DATA UNTUK PETA (LEAFLET) ---
+            data.forEach(row => {
+                if (row.Lat && row.Lng) {
+                    // Membuat marker bulat (circle) agar mudah diberi warna
+                    L.circleMarker([row.Lat, row.Lng], {
+                        radius: 8,
+                        fillColor: getMarkerColor(row.Tipe_Charger),
+                        color: "#fff",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map).bindPopup(`
+                        <b>${row.Nama_SPKLU}</b><br>
+                        Tipe: ${row.Tipe_Charger}<br>
+                        Pemakaian: ${row.Pemakaian_kWh} kWh
+                    `);
+                }
+            });
+
+            // --- C. OLAH DATA UNTUK GRAFIK TOP 10 (CHART.JS) ---
+            // Urutkan data berdasarkan kWh terbesar ke terkecil
+            const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
+            const top10Data = sortedData.slice(0, 10); // Ambil 10 teratas
+
+            const labels = top10Data.map(row => row.Nama_SPKLU);
+            const values = top10Data.map(row => row.Pemakaian_kWh);
+
+            const ctx = document.getElementById('topChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pemakaian kWh',
+                        data: values,
+                        backgroundColor: '#c59b4e', // Warna batang emas/coklat sesuai referensi
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Membuat grafik menjadi horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }, // Sembunyikan label legend di atas grafik
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { display: false } }
                     }
-                });
-            },
-            error: function(error) {
-                console.error("Gagal mengambil data dari Google Sheets:", error);
-            }
-        });
-    </script>
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
