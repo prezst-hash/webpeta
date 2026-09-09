@@ -322,18 +322,40 @@
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            // --- B. OLAH DATA UNTUK PETA (LEAFLET) ---
+// --- B. OLAH DATA UNTUK PETA (LEAFLET) ---
             data.forEach(row => {
                 if (row.Lat && row.Lng) {
                     let kwhFormatted = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
-                    L.circleMarker([row.Lat, row.Lng], {
-                        radius: 8,
-                        fillColor: getMarkerColor(row.Tipe_Charger),
-                        color: "#fff",
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    }).addTo(map).bindPopup(`
+                    let warna = getMarkerColor(row.Tipe_Charger);
+
+                    // Membuat ikon kustom berbentuk pin/simbol EV menggunakan SVG
+                    let evIcon = L.divIcon({
+                        className: 'custom-ev-marker',
+                        html: `
+                            <div style="
+                                background-color: ${warna};
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 50%;
+                                border: 2px solid white;
+                                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                                font-size: 14px;
+                            ">
+                                <!-- Simbol Petir / EV -->
+                                ⚡
+                            </div>
+                        `,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14],
+                        popupAnchor: [0, -14]
+                    });
+
+                    // Masukkan ke peta menggunakan L.marker dengan ikon kustom
+                    L.marker([row.Lat, row.Lng], { icon: evIcon }).addTo(map).bindPopup(`
                         <b>${row.Nama_SPKLU}</b><br>
                         Tipe: ${row.Tipe_Charger}<br>
                         Pemakaian: ${kwhFormatted} kWh
