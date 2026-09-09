@@ -238,18 +238,10 @@
             border-radius: 4px;
             border: 1px solid #ccc;
         }
-        .btn-upload {
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
+        .no-photo {
             font-size: 11px;
-            font-weight: bold;
-        }
-        .btn-upload:hover {
-            background-color: #e68a00;
+            color: #999;
+            font-style: italic;
         }
 
         /* 7. Legenda Peta */
@@ -404,7 +396,7 @@
         </div>
     </div>
 
-    <!-- Konten Tab 4: Monitoring SPKLU (Tabel & Upload Foto) -->
+    <!-- Konten Tab 4: Monitoring SPKLU (Tabel & Foto dari Sheet) -->
     <div id="tabMonitoring" class="tab-content">
         <div class="panel" style="margin-bottom: 20px;">
             <div class="panel-header" style="background-color: #2e7d32;">MONITORING DATA & FOTO SPKLU</div>
@@ -423,7 +415,7 @@
                             </tr>
                         </thead>
                         <tbody id="monitoringTableBody">
-                            <!-- Data akan dimuat otomatis lewat JavaScript -->
+                            <!-- Data akan dimuat otomatis lewat JavaScript dari Google Sheets -->
                         </tbody>
                     </table>
                 </div>
@@ -467,16 +459,6 @@
         }
     }
 
-    // Fungsi untuk pratinjau foto lokal saat di-upload via tombol edit
-    function previewImage(event, targetId) {
-        const reader = new FileReader();
-        reader.onload = function(){
-            const output = document.getElementById(targetId);
-            output.src = reader.result;
-        };
-        reader.readAsDataURL(event.target.files[0]);
-    }
-
     // 1. INISIALISASI PETA
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     window.mapInstance = map;
@@ -514,7 +496,7 @@
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            // Render Tabel Monitoring
+            // Render Tabel Monitoring (Membaca kolom Foto_Lokasi & Foto_Mesin dari Google Sheets)
             const tableBody = document.getElementById('monitoringTableBody');
             let tableHtml = '';
             data.forEach((row, index) => {
@@ -522,9 +504,9 @@
                 let trx = row.Total_Transaksi || 0;
                 let tipe = row.Tipe_Charger || '-';
                 
-                // Jika di spreadsheet belum ada kolom foto, kita sediakan placeholder dan tombol upload
-                let fotoLokasi = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" id="loc-img-${index}">` : `<img src="" class="img-preview" id="loc-img-${index}" alt="Belum ada foto"><br>`;
-                let fotoMesin = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" id="machine-img-${index}">` : `<img src="" class="img-preview" id="machine-img-${index}" alt="Belum ada foto"><br>`;
+                // Cek apakah ada link foto di Google Sheets
+                let fotoLokasiHtml = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" alt="Foto Lokasi">` : `<span class="no-photo">Belum ada foto</span>`;
+                let fotoMesinHtml = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" alt="Foto Mesin">` : `<span class="no-photo">Belum ada foto</span>`;
 
                 tableHtml += `
                     <tr>
@@ -533,16 +515,8 @@
                         <td>${tipe}</td>
                         <td>${kwhFmt} kWh</td>
                         <td>${trx} kali</td>
-                        <td>
-                            ${fotoLokasi}
-                            <input type="file" accept="image/*" style="display:none" id="file-loc-${index}" onchange="previewImage(event, 'loc-img-${index}')">
-                            <button class="btn-upload" onclick="document.getElementById('file-loc-${index}').click()">Edit / Upload</button>
-                        </td>
-                        <td>
-                            ${fotoMesin}
-                            <input type="file" accept="image/*" style="display:none" id="file-machine-${index}" onchange="previewImage(event, 'machine-img-${index}')">
-                            <button class="btn-upload" onclick="document.getElementById('file-machine-${index}').click()">Edit / Upload</button>
-                        </td>
+                        <td>${fotoLokasiHtml}</td>
+                        <td>${fotoMesinHtml}</td>
                     </tr>
                 `;
             });
