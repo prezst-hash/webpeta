@@ -127,9 +127,20 @@
     .main-content {
         flex-direction: column; /* Mengubah susunan bersampingan menjadi atas-bawah */
     }
-    .panel-body {
-        height: 350px; /* Menyesuaikan tinggi agar pas di layar HP */
-    }
+.panel-body {
+            padding: 15px;
+            height: 400px; 
+            /* Hapus display: flex dari sini */
+        }
+        .panel-peta {
+            display: flex;
+            flex-direction: column; 
+        }
+        #map {
+            width: 100%;
+            flex: 1; 
+            border-radius: 4px;
+        }
 }
    /* Styling Panel R4 */
         .r4-panel {
@@ -247,10 +258,10 @@
             </div>
         </div>
 
-        <!-- Panel Peta Sebaran -->
+<!-- Panel Peta Sebaran -->
         <div class="panel">
             <div class="panel-header">PETA SEBARAN SPKLU</div>
-            <div class="panel-body">
+            <div class="panel-body panel-peta">
                 <div id="map"></div>
                 <div class="legend">
                     <div class="legend-item"><span class="dot ultra"></span> Ultra Fast Charger</div>
@@ -302,7 +313,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
 <script>
     // 1. INISIALISASI PETA (Fokus ke wilayah Kalimantan Barat)
