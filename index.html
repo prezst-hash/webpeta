@@ -251,7 +251,13 @@
             const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
             const top10Data = sortedData.slice(0, 10); // Ambil 10 teratas
 
-            const labels = top10Data.map(row => row.Nama_SPKLU);
+           const labels = top10Data.map(row => {
+            // Jika kolom ID_Charger ada isinya, gabungkan. Jika kosong, tampilkan namanya saja.
+            if (row.ID_Charger) {
+            return `${row.Nama_SPKLU} (${row.ID_Charger})`;
+            }
+    return row.Nama_SPKLU;
+});
             const values = top10Data.map(row => row.Pemakaian_kWh);
 
             const ctx = document.getElementById('topChart').getContext('2d');
