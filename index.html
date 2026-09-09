@@ -107,6 +107,30 @@
         .dot.ultra { background: #9c27b0; }
         .dot.fast { background: #ff9800; }
         .dot.medium { background: #00a2e9; }
+        /* Aturan khusus untuk layar HP (lebar maksimal 768px) */
+@media (max-width: 768px) {
+    .header-section {
+        flex-direction: column;
+        text-align: center;
+    }
+    .kpi-area {
+        flex-direction: column;
+        width: 100%;
+        margin-top: 15px;
+        gap: 0;
+    }
+    .kpi-card {
+        border-left: none;
+        border-bottom: 1px solid #ddd;
+        padding: 15px 0;
+    }
+    .main-content {
+        flex-direction: column; /* Mengubah susunan bersampingan menjadi atas-bawah */
+    }
+    .panel-body {
+        height: 350px; /* Menyesuaikan tinggi agar pas di layar HP */
+    }
+}
     </style>
 </head>
 <body>
