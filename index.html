@@ -549,7 +549,7 @@
                                 },
                                 label: function(context) {
                                     let val = context.parsed.x || 0;
-                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 0 })} kWh`;
+                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
                                 }
                             }
                         }
@@ -585,7 +585,15 @@
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        datalabels: { display: false }
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.parsed.x || 0;
+                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
+                                }
+                            }
+                        }
                     }, 
                     scales: {
                         x: { grid: { display: false } },
