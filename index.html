@@ -65,7 +65,34 @@
             color: var(--pln-blue);
         }
 
-        /* 2. Styling Panel R4 (Donut Chart) */
+        /* 2. Styling Sistem Tab */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-button {
+            background-color: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .tab-button.active {
+            background-color: var(--pln-blue);
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 3. Styling Panel R4 (Donut Chart) */
         .r4-panel {
             background: #fff;
             border: 2px solid #a6c8e6;
@@ -130,10 +157,11 @@
         .legend-box { width: 16px; height: 16px; border-radius: 2px; flex-shrink: 0; }
         .legend-text strong { display: block; font-size: 11px; }
 
-        /* 3. Konten Utama: 2 Kolom (Grafik & Peta) */
+        /* 4. Konten Utama: 2 Kolom (Grafik & Peta) */
         .main-content {
             display: flex;
             gap: 20px;
+            margin-bottom: 20px;
         }
         .panel {
             flex: 1;
@@ -163,7 +191,20 @@
             border-radius: 4px;
         }
 
-        /* 4. Legenda Peta */
+        /* 5. Styling Panel Tambahan (Bottom 10 & Tren) */
+        .bottom-panel-header {
+            background-color: #2e7d32; 
+        }
+        .trend-panel-header {
+            background-color: #005a9c; 
+        }
+        .trend-chart-container {
+            width: 100%;
+            height: 280px;
+            position: relative;
+        }
+
+        /* 6. Legenda Peta */
         .legend {
             display: flex;
             justify-content: center;
@@ -174,9 +215,6 @@
         }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .dot.ultra { background: #9c27b0; }
-        .dot.fast { background: #ff9800; }
-        .dot.medium { background: #00a2e9; }
 
         /* Responsif untuk Layar HP */
         @media (max-width: 768px) {
@@ -189,19 +227,6 @@
             .main-content { flex-direction: column; }
             .custom-legend { align-items: center; }
         }
-    
-/* Styling Panel Tambahan (Bottom 10 & Tren) */
-        .bottom-panel-header {
-            background-color: #2e7d32; /* Warna hijau untuk bottom 10 */
-        }
-        .trend-panel-header {
-            background-color: #005a9c; /* Warna biru untuk tren */
-        }
-        .trend-chart-container {
-            width: 100%;
-            height: 280px;
-            position: relative;
-        }    
     </style>
 </head>
 <body>
@@ -230,43 +255,63 @@
         </div>
     </div>
 
-    <!-- Bagian 2: Panel Transaksi R4 (Donut Chart) -->
-    <div class="r4-panel">
-        <div class="r4-title">TRANSAKSI SPKLU R4</div>
-        <div class="r4-content">
-            
-            <!-- Sisi Kiri: TOTAL KWh -->
-            <div class="r4-section">
-                <div class="r4-summary">
-                    <span class="badge-green">TOTAL KWh</span>
-                    <div class="value-large" id="donut-total-kwh">0</div>
-                    <div class="unit">kWh</div>
+    <!-- Bagian 2: Tombol Tab Navigasi -->
+    <div class="tab-container">
+        <button class="tab-button active" onclick="openTab(event, 'tabR4')">Transaksi R4</button>
+        <button class="tab-button" onclick="openTab(event, 'tabTren')">Tren Tahunan</button>
+    </div>
+
+    <!-- Konten Tab 1: Transaksi R4 (Donut Chart) -->
+    <div id="tabR4" class="tab-content active">
+        <div class="r4-panel">
+            <div class="r4-title">TRANSAKSI SPKLU R4</div>
+            <div class="r4-content">
+                
+                <!-- Sisi Kiri: TOTAL KWh -->
+                <div class="r4-section">
+                    <div class="r4-summary">
+                        <span class="badge-green">TOTAL KWh</span>
+                        <div class="value-large" id="donut-total-kwh">0</div>
+                        <div class="unit">kWh</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="kwhDonutChart"></canvas>
+                    </div>
+                    <div class="custom-legend" id="legend-kwh"></div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="kwhDonutChart"></canvas>
+
+                <div class="vertical-line"></div>
+
+                <!-- Sisi Kanan: TOTAL TRANSAKSI -->
+                <div class="r4-section">
+                    <div class="r4-summary">
+                        <span class="badge-green">TOTAL TRANSAKSI</span>
+                        <div class="value-large" id="donut-total-trx">0</div>
+                        <div class="unit">kali</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="trxDonutChart"></canvas>
+                    </div>
+                    <div class="custom-legend" id="legend-trx"></div>
                 </div>
-                <div class="custom-legend" id="legend-kwh"></div>
+
             </div>
-
-            <div class="vertical-line"></div>
-
-            <!-- Sisi Kanan: TOTAL TRANSAKSI -->
-            <div class="r4-section">
-                <div class="r4-summary">
-                    <span class="badge-green">TOTAL TRANSAKSI</span>
-                    <div class="value-large" id="donut-total-trx">0</div>
-                    <div class="unit">kali</div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="trxDonutChart"></canvas>
-                </div>
-                <div class="custom-legend" id="legend-trx"></div>
-            </div>
-
         </div>
     </div>
 
-    <!-- Bagian 3: Grafik dan Peta -->
+    <!-- Konten Tab 2: Tren Pemakaian Tahunan -->
+    <div id="tabTren" class="tab-content">
+        <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel-header trend-panel-header">TREN PEMAKAIAN KWH SPKLU</div>
+            <div class="panel-body" style="height: 320px;">
+                <div class="trend-chart-container" style="height: 100%;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bagian 3: Grafik Top 10 dan Peta Sebaran -->
     <div class="main-content">
         <!-- Panel Grafik Top 10 -->
         <div class="panel">
@@ -282,32 +327,24 @@
             <div class="panel-body panel-peta">
                 <div id="map"></div>
                 <div class="legend">
-                    <div class="legend-item"><span class="dot ultra"></span> Ultra Fast Charger</div>
-                    <div class="legend-item"><span class="dot fast"></span> Fast Charger</div>
-                    <div class="legend-item"><span class="dot medium"></span> Medium Charger</div>
+                    <div class="legend-item"><span class="dot ultra" style="background: #9c27b0; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Ultra Fast Charger</div>
+                    <div class="legend-item"><span class="dot fast" style="background: #ff9800; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Fast Charger</div>
+                    <div class="legend-item"><span class="dot medium" style="background: #00a2e9; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Medium Charger</div>
                 </div>
             </div>
         </div>
     </div>
-<!-- Bagian Bawah: Bottom 10 dan Tren Pemakaian Tahunan -->
-    <div class="main-content" style="margin-top: 20px;">
-        <!-- Panel Bottom 10 Pemakaian kWh -->
+
+    <!-- Bagian 4: Panel Bottom 10 Pemakaian kWh -->
+    <div class="main-content">
         <div class="panel">
             <div class="panel-header bottom-panel-header">BOTTOM 10 PEMAKAIAN KWH</div>
             <div class="panel-body">
                 <canvas id="bottomChart"></canvas>
             </div>
         </div>
-
-        <!-- Panel Tren Pemakaian kWh SPKLU -->
-        <div class="panel">
-            <div class="panel-header trend-panel-header">TREN PEMAKAIAN KWH SPKLU</div>
-            <div class="panel-body">
-                <div class="trend-chart-container">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
-        </div>
+        <!-- Kolom kosong penyeimbang layout jika diperlukan -->
+        <div class="panel" style="border: none; background: transparent; box-shadow: none;"></div>
     </div>
     
 </div>
@@ -319,6 +356,20 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
 <script>
+    // Fungsi untuk Tab Navigasi
+    function openTab(evt, tabName) {
+        const tabContents = document.getElementsByClassName("tab-content");
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove("active");
+        }
+        const tabButtons = document.getElementsByClassName("tab-button");
+        for (let i = 0; i < tabButtons.length; i++) {
+            tabButtons[i].classList.remove("active");
+        }
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+
     // 1. INISIALISASI PETA
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -331,11 +382,10 @@
         return '#00a2e9'; 
     }
 
-    // URL CSV Google Sheets (Pastikan Sheet 1 dan Sheet 2 sudah dipublikasikan ke web)
     const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
     const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
-    // 2. AMBIL DATA SHEET 1 (Data Utama SPKLU)
+    // 2. AMBIL DATA SHEET 1
     Papa.parse(csvUrlSheet1, {
         download: true,
         header: true,
@@ -488,8 +538,7 @@
                 }
             });
 
-            // --- E. BOTTOM 10 PEMAKAIAN KWH ---
-            // Mengambil 10 data terendah dari pemakaian kWh (> 0)
+            // Bottom 10 Chart
             const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
             const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
             const bottom10Data = sortedBottom.slice(0, 10);
@@ -503,7 +552,7 @@
                     labels: labelsBottom,
                     datasets: [{
                         data: valuesBottom,
-                        backgroundColor: '#8bc34a', // Warna hijau muda sesuai referensi
+                        backgroundColor: '#8bc34a',
                         borderWidth: 0
                     }]
                 },
@@ -521,17 +570,16 @@
                     }
                 }
             });
-
         }
     });
 
-    // 3. AMBIL DATA SHEET 2 (Tren Tahunan untuk Grafik Batang Vertikal)
+    // 3. AMBIL DATA SHEET 2 (Tren Tahunan)
     Papa.parse(csvUrlSheet2, {
         download: true,
         header: true,
         dynamicTyping: true,
         complete: function(results) {
-            const trendData = results.data.filter(row => row.Tahun); // Asumsi kolom pertama bernama 'Tahun'
+            const trendData = results.data.filter(row => row.Tahun);
 
             const years = trendData.map(row => `s.d Mei ${row.Tahun}`);
             const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
@@ -542,7 +590,7 @@
                     labels: years,
                     datasets: [{
                         data: kwhTrendValues,
-                        backgroundColor: '#26a69a', // Warna hijau toska
+                        backgroundColor: '#26a69a',
                         borderWidth: 0
                     }]
                 },
@@ -561,7 +609,7 @@
                     }, 
                     scales: {
                         x: { grid: { display: false } },
-                        y: { grid: { display: false }, display: false } // Sembunyikan angka sumbu Y agar bersih seperti contoh
+                        y: { grid: { display: false }, display: false }
                     }
                 }
             });
