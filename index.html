@@ -70,6 +70,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
         .tab-button {
             background-color: #e0e0e0;
@@ -204,7 +205,54 @@
             position: relative;
         }
 
-        /* 6. Legenda Peta */
+        /* 6. Styling Tabel Monitoring SPKLU */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            max-height: 500px;
+        }
+        .spklu-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+        .spklu-table th, .spklu-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .spklu-table th {
+            background-color: var(--pln-blue);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .spklu-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .img-preview {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .btn-upload {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .btn-upload:hover {
+            background-color: #e68a00;
+        }
+
+        /* 7. Legenda Peta */
         .legend {
             display: flex;
             justify-content: center;
@@ -255,11 +303,12 @@
         </div>
     </div>
 
-    <!-- Bagian 2: Tombol Tab Navigasi (3 Tab) -->
+    <!-- Bagian 2: Tombol Tab Navigasi (4 Tab) -->
     <div class="tab-container">
         <button class="tab-button active" onclick="openTab(event, 'tabR4')">Transaksi R4</button>
         <button class="tab-button" onclick="openTab(event, 'tabTren')">Tren Pemakaian</button>
         <button class="tab-button" onclick="openTab(event, 'tabPeta')" id="btnTabPeta">Peta</button>
+        <button class="tab-button" onclick="openTab(event, 'tabMonitoring')">Monitoring SPKLU</button>
     </div>
 
     <!-- Konten Tab 1: Transaksi R4 (Donut Chart, Top 10, Bottom 10) -->
@@ -316,7 +365,7 @@
         </div>
     </div>
 
-    <!-- Konten Tab 2: Tren Pemakaian (2 Grafik Tren Berdampingan) -->
+    <!-- Konten Tab 2: Tren Pemakaian -->
     <div id="tabTren" class="tab-content">
         <div class="main-content">
             <!-- Tren kWh -->
@@ -350,6 +399,33 @@
                     <div class="legend-item"><span class="dot" style="background: #9c27b0; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Ultra Fast Charger</div>
                     <div class="legend-item"><span class="dot" style="background: #ff9800; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Fast Charger</div>
                     <div class="legend-item"><span class="dot" style="background: #00a2e9; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Medium Charger</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Konten Tab 4: Monitoring SPKLU (Tabel & Upload Foto) -->
+    <div id="tabMonitoring" class="tab-content">
+        <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel-header" style="background-color: #2e7d32;">MONITORING DATA & FOTO SPKLU</div>
+            <div class="panel-body" style="height: auto; padding: 10px;">
+                <div class="table-responsive">
+                    <table class="spklu-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama SPKLU</th>
+                                <th>Tipe Charger</th>
+                                <th>Pemakaian (kWh)</th>
+                                <th>Total Transaksi</th>
+                                <th>Foto Lokasi SPKLU</th>
+                                <th>Foto Mesin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monitoringTableBody">
+                            <!-- Data akan dimuat otomatis lewat JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -391,6 +467,16 @@
         }
     }
 
+    // Fungsi untuk pratinjau foto lokal saat di-upload via tombol edit
+    function previewImage(event, targetId) {
+        const reader = new FileReader();
+        reader.onload = function(){
+            const output = document.getElementById(targetId);
+            output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
     // 1. INISIALISASI PETA
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     window.mapInstance = map;
@@ -427,6 +513,40 @@
             document.getElementById('kpi-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
+
+            // Render Tabel Monitoring
+            const tableBody = document.getElementById('monitoringTableBody');
+            let tableHtml = '';
+            data.forEach((row, index) => {
+                let kwhFmt = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+                let trx = row.Total_Transaksi || 0;
+                let tipe = row.Tipe_Charger || '-';
+                
+                // Jika di spreadsheet belum ada kolom foto, kita sediakan placeholder dan tombol upload
+                let fotoLokasi = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" id="loc-img-${index}">` : `<img src="" class="img-preview" id="loc-img-${index}" alt="Belum ada foto"><br>`;
+                let fotoMesin = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" id="machine-img-${index}">` : `<img src="" class="img-preview" id="machine-img-${index}" alt="Belum ada foto"><br>`;
+
+                tableHtml += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${row.Nama_SPKLU}</strong></td>
+                        <td>${tipe}</td>
+                        <td>${kwhFmt} kWh</td>
+                        <td>${trx} kali</td>
+                        <td>
+                            ${fotoLokasi}
+                            <input type="file" accept="image/*" style="display:none" id="file-loc-${index}" onchange="previewImage(event, 'loc-img-${index}')">
+                            <button class="btn-upload" onclick="document.getElementById('file-loc-${index}').click()">Edit / Upload</button>
+                        </td>
+                        <td>
+                            ${fotoMesin}
+                            <input type="file" accept="image/*" style="display:none" id="file-machine-${index}" onchange="previewImage(event, 'machine-img-${index}')">
+                            <button class="btn-upload" onclick="document.getElementById('file-machine-${index}').click()">Edit / Upload</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = tableHtml;
 
             // Peta Marker
             data.forEach(row => {
@@ -604,7 +724,7 @@
         }
     });
 
-// 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2 (Dengan Bulan Otomatis & Ruang Label Atas)
+    // 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2
     function loadTrendCharts() {
         Papa.parse(csvUrlSheet2, {
             download: true,
@@ -613,7 +733,6 @@
             complete: function(results) {
                 const trendData = results.data.filter(row => row.Tahun);
 
-                // Mengambil nama bulan berjalan secara otomatis dalam Bahasa Indonesia
                 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                 const currentMonthName = monthNames[new Date().getMonth()];
 
@@ -621,7 +740,6 @@
                 const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
                 const trxTrendValues = trendData.map(row => row.Total_Transaksi);
 
-                // Grafik Tren kWh
                 new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
                     type: 'bar',
                     data: {
@@ -659,7 +777,6 @@
                     }
                 });
 
-                // Grafik Tren Kali Transaksi
                 new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
                     type: 'bar',
                     data: {
