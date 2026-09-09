@@ -131,6 +131,85 @@
         height: 350px; /* Menyesuaikan tinggi agar pas di layar HP */
     }
 }
+   /* Styling Panel R4 */
+        .r4-panel {
+            background: #fff;
+            border: 2px solid #a6c8e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .r4-title {
+            background-color: #003380;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px 20px;
+            display: inline-block;
+            border-bottom-right-radius: 20px;
+            border-top-left-radius: 6px;
+            margin-top: -2px;
+            margin-left: -2px;
+        }
+        .r4-content {
+            display: flex;
+            padding: 15px 20px;
+            align-items: center;
+        }
+        .r4-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .vertical-line {
+            width: 2px;
+            background-color: #a6c8e6;
+            height: 120px;
+            margin: 0 20px;
+        }
+        .r4-summary {
+            width: 130px;
+        }
+        .badge-green {
+            background-color: #1a9c79;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .value-large {
+            font-size: 24px;
+            font-weight: bold;
+            color: #002b5e;
+        }
+        .unit { font-size: 14px; color: #002b5e; }
+        .chart-container {
+            width: 160px;
+            height: 160px;
+        }
+        .custom-legend {
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 160px;
+        }
+        .legend-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .legend-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .legend-text strong { display: block; font-size: 11px;}
+    
     </style>
 </head>
 <body>
@@ -181,13 +260,50 @@
             </div>
         </div>
     </div>
+<!-- Panel Transaksi R4 (Donut Chart) -->
+    <div class="r4-panel">
+        <div class="r4-title">TRANSAKSI SPKLU R4</div>
+        <div class="r4-content">
+            
+            <!-- Sisi Kiri: TOTAL KWh -->
+            <div class="r4-section">
+                <div class="r4-summary">
+                    <span class="badge-green">TOTAL KWh</span>
+                    <div class="value-large" id="donut-total-kwh">0</div>
+                    <div class="unit">kWh</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="kwhDonutChart"></canvas>
+                </div>
+                <div class="custom-legend" id="legend-kwh"></div>
+            </div>
+
+            <div class="vertical-line"></div>
+
+            <!-- Sisi Kanan: TOTAL TRANSAKSI -->
+            <div class="r4-section">
+                <div class="r4-summary">
+                    <span class="badge-green">TOTAL TRANSAKSI</span>
+                    <div class="value-large" id="donut-total-trx">0</div>
+                    <div class="unit">kali</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trxDonutChart"></canvas>
+                </div>
+                <div class="custom-legend" id="legend-trx"></div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
 <script>
     // 1. INISIALISASI PETA (Fokus ke wilayah Kalimantan Barat)
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
@@ -302,6 +418,82 @@
                     }
                 }
             });
+        // --- D. OLAH DATA UNTUK DONUT CHART (R4) ---
+            // Daftarkan plugin datalabels untuk persentase
+            Chart.register(ChartDataLabels);
+
+            let summaryR4 = {
+                'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' },
+                'Medium': { kwh: 0, trx: 0, color: '#0070c0' },
+                'Fast': { kwh: 0, trx: 0, color: '#f07b50' }
+            };
+
+            // Hitung total per tipe charger
+            data.forEach(row => {
+                let tipe = row.Tipe_Charger;
+                if (summaryR4[tipe]) {
+                    summaryR4[tipe].kwh += row.Pemakaian_kWh || 0;
+                    summaryR4[tipe].trx += row.Total_Transaksi || 0;
+                }
+            });
+
+            const labelsR4 = ['FAST CHARGING', 'MEDIUM CHARGING', 'ULTRA FAST CHARGING'];
+            const colorsR4 = [summaryR4['Fast'].color, summaryR4['Medium'].color, summaryR4['Ultra Fast'].color];
+            
+            const kwhValues = [summaryR4['Fast'].kwh, summaryR4['Medium'].kwh, summaryR4['Ultra Fast'].kwh];
+            const trxValues = [summaryR4['Fast'].trx, summaryR4['Medium'].trx, summaryR4['Ultra Fast'].trx];
+
+            // Update teks total besar
+            document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID');
+
+            // Fungsi umum untuk membuat Donut Chart
+            function createDonut(ctxId, dataValues) {
+                return new Chart(document.getElementById(ctxId).getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: labelsR4, datasets: [{ data: dataValues, backgroundColor: colorsR4, borderWidth: 1 }] },
+                    options: {
+                        cutout: '50%', // Besaran lubang tengah
+                        plugins: {
+                            legend: { display: false }, // Matikan legend bawaan
+                            datalabels: {
+                                color: '#fff',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: (value, ctx) => {
+                                    let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                    return percentage;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createDonut('kwhDonutChart', kwhValues);
+            createDonut('trxDonutChart', trxValues);
+
+            // Fungsi untuk membuat Legend Kustom di sebelah kanan diagram
+            function buildLegend(containerId, dataValues, unit) {
+                const container = document.getElementById(containerId);
+                let html = '';
+                labelsR4.forEach((label, index) => {
+                    let formattedValue = dataValues[index].toLocaleString('id-ID') + ' ' + unit;
+                    html += `
+                        <div class="legend-row">
+                            <div class="legend-box" style="background-color: ${colorsR4[index]}"></div>
+                            <div class="legend-text">
+                                <strong>${label}</strong>
+                                ${formattedValue}
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            }
+
+            buildLegend('legend-kwh', kwhValues, 'KWh');
+            buildLegend('legend-trx', trxValues, 'kali');
+        
         }
     });
 </script>
