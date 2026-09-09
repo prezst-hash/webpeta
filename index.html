@@ -302,31 +302,6 @@
                     }
                 }
             });
-            const values = top10Data.map(row => row.Pemakaian_kWh);
-
-            const ctx = document.getElementById('topChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Pemakaian kWh',
-                        data: values,
-                        backgroundColor: '#c59b4e', // Warna batang emas/coklat sesuai referensi
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', // Membuat grafik menjadi horizontal
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } }, // Sembunyikan label legend di atas grafik
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false } }
-                    }
-                }
-            });
         }
     });
 </script>
