@@ -604,7 +604,7 @@
         }
     });
 
-    // 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2
+    // 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2 (Dengan Bulan Otomatis)
     function loadTrendCharts() {
         Papa.parse(csvUrlSheet2, {
             download: true,
@@ -613,7 +613,11 @@
             complete: function(results) {
                 const trendData = results.data.filter(row => row.Tahun);
 
-                const years = trendData.map(row => `s.d Mei ${row.Tahun}`);
+                // Mengambil nama bulan berjalan secara otomatis dalam Bahasa Indonesia
+                const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                const currentMonthName = monthNames[new Date().getMonth()];
+
+                const years = trendData.map(row => `s.d ${currentMonthName} ${row.Tahun}`);
                 const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
                 const trxTrendValues = trendData.map(row => row.Total_Transaksi);
 
