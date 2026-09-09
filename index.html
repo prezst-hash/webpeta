@@ -364,7 +364,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
 <script>
-    // Fungsi untuk Tab Navigasi & Perbaikan Ukuran Peta saat Tab dibuka
+    // Variabel global untuk mendeteksi apakah grafik tren sudah pernah dimuat
+    let trendChartLoaded = false;
+
+    // Fungsi untuk Tab Navigasi
     function openTab(evt, tabName) {
         const tabContents = document.getElementsByClassName("tab-content");
         for (let i = 0; i < tabContents.length; i++) {
@@ -377,10 +380,17 @@
         document.getElementById(tabName).classList.add("active");
         evt.currentTarget.classList.add("active");
 
+        // Jika tab Peta dibuka, perbarui ukuran peta
         if(tabName === 'tabPeta' && window.mapInstance) {
             setTimeout(function() {
                 window.mapInstance.invalidateSize();
             }, 100);
+        }
+
+        // Jika tab Tren dibuka untuk pertama kalinya, muat grafiknya agar tidak kosong
+        if(tabName === 'tabTren' && !trendChartLoaded) {
+            trendChartLoaded = true;
+            loadTrendCharts();
         }
     }
 
@@ -401,7 +411,7 @@
     const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
     const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
-    // 2. AMBIL DATA SHEET 1
+    // 2. AMBIL DATA SHEET 1 (Transaksi R4, Top 10, Bottom 10)
     Papa.parse(csvUrlSheet1, {
         download: true,
         header: true,
@@ -509,9 +519,9 @@
             buildLegend('legend-kwh', kwhValues, 'kWh');
             buildLegend('legend-trx', trxValues, 'kali');
 
-            // Top 10 Chart
+            // Top 10 Chart[cite: 2]
             const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
-            const top10Data = sortedData.slice(0, 10);
+            const top10Data = sortedData.slice(0, 10);[cite: 2]
             const labelsTop = top10Data.map(row => row.Nama_SPKLU);
             const valuesTop = top10Data.map(row => row.Pemakaian_kWh);
             const idChargers = top10Data.map(row => row.ID_Charger || '-');
@@ -554,10 +564,10 @@
                 }
             });
 
-            // Bottom 10 Chart
+            // Bottom 10 Chart[cite: 2]
             const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
             const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
-            const bottom10Data = sortedBottom.slice(0, 10);
+            const bottom10Data = sortedBottom.slice(0, 10);[cite: 2]
 
             const labelsBottom = bottom10Data.map(row => row.Nama_SPKLU);
             const valuesBottom = bottom10Data.map(row => row.Pemakaian_kWh);
@@ -589,81 +599,83 @@
         }
     });
 
-    // 3. AMBIL DATA SHEET 2 (Tren Tahunan: kWh & Transaksi)
-    Papa.parse(csvUrlSheet2, {
-        download: true,
-        header: true,
-        dynamicTyping: true,
-        complete: function(results) {
-            const trendData = results.data.filter(row => row.Tahun);
+    // 3. FUNGSI UNTUK MEMUAT GRAFIK TREN (Dipanggil saat tab Tren diklik)
+    function loadTrendCharts() {
+        Papa.parse(csvUrlSheet2, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            complete: function(results) {
+                const trendData = results.data.filter(row => row.Tahun);
 
-            const years = trendData.map(row => `s.d Mei ${row.Tahun}`);
-            const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
-            const trxTrendValues = trendData.map(row => row.Total_Transaksi);
+                const years = trendData.map(row => `s.d Mei ${row.Tahun}`);
+                const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
+                const trxTrendValues = trendData.map(row => row.Total_Transaksi);
 
-            // Grafik Tren kWh
-            new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        data: kwhTrendValues,
-                        backgroundColor: '#26a69a',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            formatter: (value) => value.toLocaleString('id-ID'),
-                            font: { weight: 'bold', size: 11 },
-                            color: '#333'
+                // Grafik Tren kWh
+                new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            data: kwhTrendValues,
+                            backgroundColor: '#26a69a',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: (value) => value.toLocaleString('id-ID'),
+                                font: { weight: 'bold', size: 11 },
+                                color: '#333'
+                            }
+                        }, 
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { display: false }, display: false }
                         }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, display: false }
                     }
-                }
-            });
+                });
 
-            // Grafik Tren Kali Transaksi
-            new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        data: trxTrendValues,
-                        backgroundColor: '#1a9c79',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            formatter: (value) => value.toLocaleString('id-ID'),
-                            font: { weight: 'bold', size: 11 },
-                            color: '#333'
+                // Grafik Tren Kali Transaksi
+                new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            data: trxTrendValues,
+                            backgroundColor: '#1a9c79',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: (value) => value.toLocaleString('id-ID'),
+                                font: { weight: 'bold', size: 11 },
+                                color: '#333'
+                            }
+                        }, 
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { display: false }, display: false }
                         }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, display: false }
                     }
-                }
-            });
-        }
-    });
+                });
+            }
+        });
+    }
 </script>
 </body>
 </html>
