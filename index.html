@@ -301,14 +301,14 @@
         <!-- Panel Grafik Top 10 dan Bottom 10 di dalam Tab R4 -->
         <div class="main-content">
             <div class="panel">
-                <div class="panel-header">TOP 10 TERTINGGI PEMAKAIAN KWH[cite: 2]</div>
+                <div class="panel-header">TOP 10 TERTINGGI PEMAKAIAN KWH</div>
                 <div class="panel-body">
                     <canvas id="topChart"></canvas>
                 </div>
             </div>
 
             <div class="panel">
-                <div class="panel-header bottom-panel-header">BOTTOM 10 PEMAKAIAN KWH[cite: 2]</div>
+                <div class="panel-header bottom-panel-header">BOTTOM 10 PEMAKAIAN KWH</div>
                 <div class="panel-body">
                     <canvas id="bottomChart"></canvas>
                 </div>
@@ -509,9 +509,9 @@
             buildLegend('legend-kwh', kwhValues, 'kWh');
             buildLegend('legend-trx', trxValues, 'kali');
 
-            // Top 10 Chart[cite: 2]
+            // Top 10 Chart
             const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
-            const top10Data = sortedData.slice(0, 10);[cite: 2]
+            const top10Data = sortedData.slice(0, 10);
             const labelsTop = top10Data.map(row => row.Nama_SPKLU);
             const valuesTop = top10Data.map(row => row.Pemakaian_kWh);
             const idChargers = top10Data.map(row => row.ID_Charger || '-');
@@ -554,10 +554,10 @@
                 }
             });
 
-            // Bottom 10 Chart[cite: 2]
+            // Bottom 10 Chart
             const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
             const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
-            const bottom10Data = sortedBottom.slice(0, 10);[cite: 2]
+            const bottom10Data = sortedBottom.slice(0, 10);
 
             const labelsBottom = bottom10Data.map(row => row.Nama_SPKLU);
             const valuesBottom = bottom10Data.map(row => row.Pemakaian_kWh);
