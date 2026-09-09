@@ -604,7 +604,7 @@
         }
     });
 
-// 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2 (Dengan Keterangan Persen / Kelipatan)
+// 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2 (Dengan Bulan Otomatis & Ruang Label Atas)
     function loadTrendCharts() {
         Papa.parse(csvUrlSheet2, {
             download: true,
@@ -613,61 +613,13 @@
             complete: function(results) {
                 const trendData = results.data.filter(row => row.Tahun);
 
+                // Mengambil nama bulan berjalan secara otomatis dalam Bahasa Indonesia
                 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                 const currentMonthName = monthNames[new Date().getMonth()];
 
                 const years = trendData.map(row => `s.d ${currentMonthName} ${row.Tahun}`);
                 const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
                 const trxTrendValues = trendData.map(row => row.Total_Transaksi);
-
-                // Fungsi untuk membuat plugin kustom menampilkan teks kelipatan/kenaikan antar batang
-                const growthPlugin = {
-                    id: 'growthPlugin',
-                    afterDatasetsDraw(chart) {
-                        const { ctx, data, chartArea: { top, bottom, left, right } } = chart;
-                        ctx.save();
-                        
-                        const meta = chart.getDatasetMeta(0);
-                        if (!meta.data) return;
-
-                        for (let i = 0; i < meta.data.length - 1; i++) {
-                            const startModel = meta.data[i];
-                            const endModel = meta.data[i + 1];
-                            
-                            const val1 = data.datasets[0].data[i];
-                            const val2 = data.datasets[0].data[i + 1];
-
-                            if (val1 > 0) {
-                                // Hitung kelipatan (misal: 7x) atau persentase kenaikan
-                                const multiplier = (val2 / val1).toFixed(1);
-                                const percentage = (((val2 - val1) / val1) * 100).toFixed(0);
-                                
-                                // Teks yang akan ditampilkan di tengah antara dua batang (bisa dipilih: kelipatan atau persen)
-                                const labelText = `${multiplier}X (${percentage}%)`;
-
-                                const midX = (startModel.x + endModel.x) / 2;
-                                const midY = Math.min(startModel.y, endModel.y) - 25;
-
-                                // Gambar kotak latar belakang badge
-                                ctx.fillStyle = '#ffffff';
-                                ctx.strokeStyle = '#005a9c';
-                                ctx.lineWidth = 1.5;
-                                ctx.beginPath();
-                                ctx.roundRect(midX - 35, midY - 12, 70, 24, 12);
-                                ctx.fill();
-                                ctx.stroke();
-
-                                // Tulis teks di dalam badge
-                                ctx.fillStyle = '#005a9c';
-                                ctx.font = 'bold 11px sans-serif';
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'middle';
-                                ctx.fillText(labelText, midX, midY);
-                            }
-                        }
-                        ctx.restore();
-                    }
-                };
 
                 // Grafik Tren kWh
                 new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
@@ -695,10 +647,16 @@
                         }, 
                         scales: {
                             x: { grid: { display: false } },
-                            y: { grid: { display: false }, display: false }
+                            y: { 
+                                grid: { display: false }, 
+                                display: false,
+                                suggestedMax: function(context) {
+                                    let max = Math.max(...context.chart.data.datasets[0].data);
+                                    return max * 1.2;
+                                }
+                            }
                         }
-                    },
-                    plugins: [growthPlugin] // Mengaktifkan plugin penghitung kenaikan
+                    }
                 });
 
                 // Grafik Tren Kali Transaksi
@@ -727,10 +685,16 @@
                         }, 
                         scales: {
                             x: { grid: { display: false } },
-                            y: { grid: { display: false }, display: false }
+                            y: { 
+                                grid: { display: false }, 
+                                display: false,
+                                suggestedMax: function(context) {
+                                    let max = Math.max(...context.chart.data.datasets[0].data);
+                                    return max * 1.2;
+                                }
+                            }
                         }
-                    },
-                    plugins: [growthPlugin] // Mengaktifkan plugin penghitung kenaikan
+                    }
                 });
             }
         });
