@@ -30,7 +30,8 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        /* Header & KPI */
+        
+        /* 1. Header & KPI */
         .header-section {
             display: flex;
             justify-content: space-between;
@@ -63,86 +64,8 @@
             font-weight: bold;
             color: var(--pln-blue);
         }
-        /* Konten Utama: 2 Kolom */
-        .main-content {
-            display: flex;
-            gap: 20px;
-        }
-        .panel {
-            flex: 1;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .panel-header {
-            background-color: var(--pln-blue);
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .panel-body {
-            padding: 15px;
-            height: 400px;
-            display: flex;
-            flex-direction: column; /* Menyusun peta dan legenda secara vertikal */
-        }
-        #map {
-            width: 100%;
-            flex: 1; /* Memaksa peta menyesuaikan sisa ruang tanpa menabrak legenda */
-            border-radius: 4px;
-        }
-        /* Legenda Peta */
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .dot.ultra { background: #9c27b0; }
-        .dot.fast { background: #ff9800; }
-        .dot.medium { background: #00a2e9; }
-        /* Aturan khusus untuk layar HP (lebar maksimal 768px) */
-@media (max-width: 768px) {
-    .header-section {
-        flex-direction: column;
-        text-align: center;
-    }
-    .kpi-area {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 15px;
-        gap: 0;
-    }
-    .kpi-card {
-        border-left: none;
-        border-bottom: 1px solid #ddd;
-        padding: 15px 0;
-    }
-    .main-content {
-        flex-direction: column; /* Mengubah susunan bersampingan menjadi atas-bawah */
-    }
-.panel-body {
-            padding: 15px;
-            height: 400px; 
-            /* Hapus display: flex dari sini */
-        }
-        .panel-peta {
-            display: flex;
-            flex-direction: column; 
-        }
-        #map {
-            width: 100%;
-            flex: 1; 
-            border-radius: 4px;
-        }
-}
-   /* Styling Panel R4 */
+
+        /* 2. Styling Panel R4 (Donut Chart) */
         .r4-panel {
             background: #fff;
             border: 2px solid #a6c8e6;
@@ -178,9 +101,7 @@
             height: 120px;
             margin: 0 20px;
         }
-        .r4-summary {
-            width: 130px;
-        }
+        .r4-summary { width: 130px; }
         .badge-green {
             background-color: #1a9c79;
             color: white;
@@ -197,10 +118,7 @@
             color: #002b5e;
         }
         .unit { font-size: 14px; color: #002b5e; }
-        .chart-container {
-            width: 160px;
-            height: 160px;
-        }
+        .chart-container { width: 160px; height: 160px; }
         .custom-legend {
             font-size: 11px;
             display: flex;
@@ -208,25 +126,76 @@
             gap: 10px;
             width: 160px;
         }
-        .legend-row {
+        .legend-row { display: flex; align-items: flex-start; gap: 8px; }
+        .legend-box { width: 16px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+        .legend-text strong { display: block; font-size: 11px; }
+
+        /* 3. Konten Utama: 2 Kolom (Grafik & Peta) */
+        .main-content {
             display: flex;
-            align-items: flex-start;
-            gap: 8px;
+            gap: 20px;
         }
-        .legend-box {
-            width: 16px;
-            height: 16px;
-            border-radius: 2px;
-            flex-shrink: 0;
+        .panel {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
         }
-        .legend-text strong { display: block; font-size: 11px;}
-    
+        .panel-header {
+            background-color: var(--pln-blue);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .panel-body {
+            padding: 15px;
+            height: 400px; 
+        }
+        .panel-peta {
+            display: flex;
+            flex-direction: column; 
+        }
+        #map {
+            width: 100%;
+            flex: 1; 
+            border-radius: 4px;
+        }
+
+        /* 4. Legenda Peta */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot.ultra { background: #9c27b0; }
+        .dot.fast { background: #ff9800; }
+        .dot.medium { background: #00a2e9; }
+
+        /* Responsif untuk Layar HP */
+        @media (max-width: 768px) {
+            .header-section { flex-direction: column; text-align: center; }
+            .kpi-area { flex-direction: column; width: 100%; margin-top: 15px; gap: 0; }
+            .kpi-card { border-left: none; border-bottom: 1px solid #ddd; padding: 15px 0; }
+            .r4-content { flex-direction: column; gap: 20px; }
+            .vertical-line { height: 2px; width: 100%; margin: 10px 0; }
+            .r4-section { flex-direction: column; text-align: center; gap: 15px; }
+            .main-content { flex-direction: column; }
+            .custom-legend { align-items: center; }
+        }
     </style>
 </head>
 <body>
 
 <div class="dashboard-container">
-    <!-- Bagian Atas: Judul dan KPI -->
+    
+    <!-- Bagian 1: Judul dan KPI Atas -->
     <div class="header-section">
         <div class="title-area">
             <h1>PETA & TRANSAKSI</h1>
@@ -248,30 +217,7 @@
         </div>
     </div>
 
-    <!-- Bagian Bawah: Grafik dan Peta -->
-    <div class="main-content">
-        <!-- Panel Grafik Top 10 -->
-        <div class="panel">
-            <div class="panel-header">TOP 10 TERTINGGI PEMAKAIAN KWH</div>
-            <div class="panel-body">
-                <canvas id="topChart"></canvas>
-            </div>
-        </div>
-
-<!-- Panel Peta Sebaran -->
-        <div class="panel">
-            <div class="panel-header">PETA SEBARAN SPKLU</div>
-            <div class="panel-body panel-peta">
-                <div id="map"></div>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot ultra"></span> Ultra Fast Charger</div>
-                    <div class="legend-item"><span class="dot fast"></span> Fast Charger</div>
-                    <div class="legend-item"><span class="dot medium"></span> Medium Charger</div>
-                </div>
-            </div>
-        </div>
-    </div>
-<!-- Panel Transaksi R4 (Donut Chart) -->
+    <!-- Bagian 2: Panel Transaksi R4 (Donut Chart) -->
     <div class="r4-panel">
         <div class="r4-title">TRANSAKSI SPKLU R4</div>
         <div class="r4-content">
@@ -307,40 +253,62 @@
         </div>
     </div>
 
+    <!-- Bagian 3: Grafik dan Peta -->
+    <div class="main-content">
+        <!-- Panel Grafik Top 10 -->
+        <div class="panel">
+            <div class="panel-header">TOP 10 TERTINGGI PEMAKAIAN KWH</div>
+            <div class="panel-body">
+                <canvas id="topChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Panel Peta Sebaran -->
+        <div class="panel">
+            <div class="panel-header">PETA SEBARAN SPKLU</div>
+            <div class="panel-body panel-peta">
+                <div id="map"></div>
+                <div class="legend">
+                    <div class="legend-item"><span class="dot ultra"></span> Ultra Fast Charger</div>
+                    <div class="legend-item"><span class="dot fast"></span> Fast Charger</div>
+                    <div class="legend-item"><span class="dot medium"></span> Medium Charger</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<!-- Scripts -->
+<!-- Scripts Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
 <script>
-    // 1. INISIALISASI PETA (Fokus ke wilayah Kalimantan Barat)
+    // 1. INISIALISASI PETA 
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Fungsi warna marker berdasarkan Tipe Charger
     function getMarkerColor(tipe) {
         if (tipe === 'Ultra Fast') return '#9c27b0';
         if (tipe === 'Fast') return '#ff9800';
-        return '#00a2e9'; // Default / Medium
+        return '#00a2e9'; 
     }
 
     // 2. AMBIL DATA DARI GOOGLE SHEETS
-    // GANTI LINK DI BAWAH DENGAN LINK CSV PUBLISH TO WEB ANDA
     const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
 
     Papa.parse(csvUrl, {
         download: true,
         header: true,
-        dynamicTyping: true, // Otomatis mengubah angka teks menjadi format angka (number)
+        dynamicTyping: true,
         complete: function(results) {
-            const data = results.data.filter(row => row.Nama_SPKLU); // Buang baris kosong
+            const data = results.data.filter(row => row.Nama_SPKLU); 
 
-            // --- A. OLAH DATA UNTUK KPI (INFOGRAFIS ATAS) ---
+            // --- A. OLAH DATA UNTUK KPI ATAS ---
             let totalKwh = 0;
             let totalTransaksi = 0;
             
@@ -349,15 +317,15 @@
                 totalTransaksi += row.Total_Transaksi || 0;
             });
 
-            // Tampilkan ke HTML dengan format ribuan
-            document.getElementById('kpi-kwh').innerText = totalKwh.toLocaleString('id-ID');
-            document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID');
+            // Tampilkan dengan format tanpa koma desimal
+            document.getElementById('kpi-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+            document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
             // --- B. OLAH DATA UNTUK PETA (LEAFLET) ---
             data.forEach(row => {
                 if (row.Lat && row.Lng) {
-                    // Membuat marker bulat (circle) agar mudah diberi warna
+                    let kwhFormatted = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
                     L.circleMarker([row.Lat, row.Lng], {
                         radius: 8,
                         fillColor: getMarkerColor(row.Tipe_Charger),
@@ -368,69 +336,12 @@
                     }).addTo(map).bindPopup(`
                         <b>${row.Nama_SPKLU}</b><br>
                         Tipe: ${row.Tipe_Charger}<br>
-                        Pemakaian: ${row.Pemakaian_kWh} kWh
+                        Pemakaian: ${kwhFormatted} kWh
                     `);
                 }
             });
 
-            // --- C. OLAH DATA UNTUK GRAFIK TOP 10 (CHART.JS) ---
-            const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
-            const top10Data = sortedData.slice(0, 10); 
-
-            // 1. Sumbu Y kembali menggunakan Nama SPKLU saja
-            const labels = top10Data.map(row => row.Nama_SPKLU);
-            const values = top10Data.map(row => row.Pemakaian_kWh);
-            
-            // 2. Simpan ID_Charger ke dalam variabel terpisah
-            const idChargers = top10Data.map(row => row.ID_Charger || '-');
-
-            const ctx = document.getElementById('topChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Pemakaian kWh',
-                        data: values,
-                        customIds: idChargers, // Menyisipkan ID ke dalam dataset grafik
-                        backgroundColor: '#c59b4e',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        // 3. Modifikasi Tooltip untuk memunculkan ID Charger saat batang disentuh
-                        tooltip: {
-                            callbacks: {
-                                afterTitle: function(context) {
-                                    // Mengambil ID Charger berdasarkan batang yang sedang disentuh
-                                    const index = context[0].dataIndex;
-                                    const id = context[0].dataset.customIds[index];
-                                    return `ID Charger: ${id}`;
-                                }
-                            }
-                        }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { 
-                            grid: { display: false },
-                            ticks: {
-                                // Mencegah teks sumbu Y terpotong jika masih terlalu panjang
-                                autoSkip: false,
-                                maxRotation: 0,
-                                minRotation: 0
-                            }
-                        }
-                    }
-                }
-            });
-        // --- D. OLAH DATA UNTUK DONUT CHART (R4) ---
-            // Daftarkan plugin datalabels untuk persentase
+            // --- C. OLAH DATA UNTUK DONUT CHART (R4) ---
             Chart.register(ChartDataLabels);
 
             let summaryR4 = {
@@ -439,9 +350,9 @@
                 'Fast': { kwh: 0, trx: 0, color: '#f07b50' }
             };
 
-            // Hitung total per tipe charger
+            // Hitung total per tipe charger (menggunakan .trim() agar aman dari spasi berlebih di GSheet)
             data.forEach(row => {
-                let tipe = row.Tipe_Charger;
+                let tipe = (row.Tipe_Charger || '').trim();
                 if (summaryR4[tipe]) {
                     summaryR4[tipe].kwh += row.Pemakaian_kWh || 0;
                     summaryR4[tipe].trx += row.Total_Transaksi || 0;
@@ -454,26 +365,25 @@
             const kwhValues = [summaryR4['Fast'].kwh, summaryR4['Medium'].kwh, summaryR4['Ultra Fast'].kwh];
             const trxValues = [summaryR4['Fast'].trx, summaryR4['Medium'].trx, summaryR4['Ultra Fast'].trx];
 
-            // Update teks total besar
-            document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID');
+            // Tampilkan total di dalam panel R4 tanpa desimal
+            document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+            document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 
-            // Fungsi umum untuk membuat Donut Chart
             function createDonut(ctxId, dataValues) {
                 return new Chart(document.getElementById(ctxId).getContext('2d'), {
                     type: 'doughnut',
                     data: { labels: labelsR4, datasets: [{ data: dataValues, backgroundColor: colorsR4, borderWidth: 1 }] },
                     options: {
-                        cutout: '50%', // Besaran lubang tengah
+                        cutout: '50%',
                         plugins: {
-                            legend: { display: false }, // Matikan legend bawaan
+                            legend: { display: false },
                             datalabels: {
                                 color: '#fff',
                                 font: { weight: 'bold', size: 10 },
                                 formatter: (value, ctx) => {
                                     let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    let percentage = (value * 100 / sum).toFixed(1) + "%";
-                                    return percentage;
+                                    if (sum === 0 || value === 0) return ''; // Cegah error jika data kosong
+                                    return (value * 100 / sum).toFixed(1) + "%";
                                 }
                             }
                         }
@@ -484,12 +394,11 @@
             createDonut('kwhDonutChart', kwhValues);
             createDonut('trxDonutChart', trxValues);
 
-            // Fungsi untuk membuat Legend Kustom di sebelah kanan diagram
             function buildLegend(containerId, dataValues, unit) {
                 const container = document.getElementById(containerId);
                 let html = '';
                 labelsR4.forEach((label, index) => {
-                    let formattedValue = dataValues[index].toLocaleString('id-ID') + ' ' + unit;
+                    let formattedValue = dataValues[index].toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' ' + unit;
                     html += `
                         <div class="legend-row">
                             <div class="legend-box" style="background-color: ${colorsR4[index]}"></div>
@@ -502,9 +411,60 @@
                 container.innerHTML = html;
             }
 
-            buildLegend('legend-kwh', kwhValues, 'KWh');
+            buildLegend('legend-kwh', kwhValues, 'kWh');
             buildLegend('legend-trx', trxValues, 'kali');
-        
+
+            // --- D. OLAH DATA UNTUK GRAFIK TOP 10 (CHART.JS) ---
+            const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
+            const top10Data = sortedData.slice(0, 10); 
+
+            const labels = top10Data.map(row => row.Nama_SPKLU);
+            const values = top10Data.map(row => row.Pemakaian_kWh);
+            const idChargers = top10Data.map(row => row.ID_Charger || '-');
+
+            const ctx = document.getElementById('topChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pemakaian',
+                        data: values,
+                        customIds: idChargers,
+                        backgroundColor: '#c59b4e',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterTitle: function(context) {
+                                    const index = context[0].dataIndex;
+                                    return `ID Charger: ${context[0].dataset.customIds[index]}`;
+                                },
+                                label: function(context) {
+                                    // Memformat nilai kWh di kotak hitam saat disentuh agar tanpa desimal
+                                    let val = context.parsed.x || 0;
+                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 0 })} kWh`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 }
+                        }
+                    }
+                }
+            });
+            
         }
     });
 </script>
