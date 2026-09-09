@@ -435,12 +435,13 @@
                         borderWidth: 0
                     }]
                 },
-                options: {
+options: {
                     indexAxis: 'y', 
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
+                        datalabels: { display: false }, // <--- TAMBAHKAN BARIS INI
                         tooltip: {
                             callbacks: {
                                 afterTitle: function(context) {
@@ -448,7 +449,6 @@
                                     return `ID Charger: ${context[0].dataset.customIds[index]}`;
                                 },
                                 label: function(context) {
-                                    // Memformat nilai kWh di kotak hitam saat disentuh agar tanpa desimal
                                     let val = context.parsed.x || 0;
                                     return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 0 })} kWh`;
                                 }
