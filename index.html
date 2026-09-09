@@ -247,17 +247,61 @@
             });
 
             // --- C. OLAH DATA UNTUK GRAFIK TOP 10 (CHART.JS) ---
-            // Urutkan data berdasarkan kWh terbesar ke terkecil
             const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
-            const top10Data = sortedData.slice(0, 10); // Ambil 10 teratas
+            const top10Data = sortedData.slice(0, 10); 
 
-           const labels = top10Data.map(row => {
-            // Jika kolom ID_Charger ada isinya, gabungkan. Jika kosong, tampilkan namanya saja.
-            if (row.ID_Charger) {
-            return `${row.Nama_SPKLU} (${row.ID_Charger})`;
-            }
-    return row.Nama_SPKLU;
-});
+            // 1. Sumbu Y kembali menggunakan Nama SPKLU saja
+            const labels = top10Data.map(row => row.Nama_SPKLU);
+            const values = top10Data.map(row => row.Pemakaian_kWh);
+            
+            // 2. Simpan ID_Charger ke dalam variabel terpisah
+            const idChargers = top10Data.map(row => row.ID_Charger || '-');
+
+            const ctx = document.getElementById('topChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pemakaian kWh',
+                        data: values,
+                        customIds: idChargers, // Menyisipkan ID ke dalam dataset grafik
+                        backgroundColor: '#c59b4e',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        // 3. Modifikasi Tooltip untuk memunculkan ID Charger saat batang disentuh
+                        tooltip: {
+                            callbacks: {
+                                afterTitle: function(context) {
+                                    // Mengambil ID Charger berdasarkan batang yang sedang disentuh
+                                    const index = context[0].dataIndex;
+                                    const id = context[0].dataset.customIds[index];
+                                    return `ID Charger: ${id}`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { 
+                            grid: { display: false },
+                            ticks: {
+                                // Mencegah teks sumbu Y terpotong jika masih terlalu panjang
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
             const values = top10Data.map(row => row.Pemakaian_kWh);
 
             const ctx = document.getElementById('topChart').getContext('2d');
