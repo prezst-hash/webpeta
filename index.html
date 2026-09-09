@@ -189,6 +189,19 @@
             .main-content { flex-direction: column; }
             .custom-legend { align-items: center; }
         }
+    
+/* Styling Panel Tambahan (Bottom 10 & Tren) */
+        .bottom-panel-header {
+            background-color: #2e7d32; /* Warna hijau untuk bottom 10 */
+        }
+        .trend-panel-header {
+            background-color: #005a9c; /* Warna biru untuk tren */
+        }
+        .trend-chart-container {
+            width: 100%;
+            height: 280px;
+            position: relative;
+        }    
     </style>
 </head>
 <body>
@@ -276,7 +289,27 @@
             </div>
         </div>
     </div>
+<!-- Bagian Bawah: Bottom 10 dan Tren Pemakaian Tahunan -->
+    <div class="main-content" style="margin-top: 20px;">
+        <!-- Panel Bottom 10 Pemakaian kWh -->
+        <div class="panel">
+            <div class="panel-header bottom-panel-header">BOTTOM 10 PEMAKAIAN KWH</div>
+            <div class="panel-body">
+                <canvas id="bottomChart"></canvas>
+            </div>
+        </div>
 
+        <!-- Panel Tren Pemakaian kWh SPKLU -->
+        <div class="panel">
+            <div class="panel-header trend-panel-header">TREN PEMAKAIAN KWH SPKLU</div>
+            <div class="panel-body">
+                <div class="trend-chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
 </div>
 
 <!-- Scripts Library -->
@@ -286,7 +319,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     
 <script>
-    // 1. INISIALISASI PETA 
+    // 1. INISIALISASI PETA
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap'
@@ -298,17 +331,18 @@
         return '#00a2e9'; 
     }
 
-    // 2. AMBIL DATA DARI GOOGLE SHEETS
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
+    // URL CSV Google Sheets (Pastikan Sheet 1 dan Sheet 2 sudah dipublikasikan ke web)
+    const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
+    const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
-    Papa.parse(csvUrl, {
+    // 2. AMBIL DATA SHEET 1 (Data Utama SPKLU)
+    Papa.parse(csvUrlSheet1, {
         download: true,
         header: true,
         dynamicTyping: true,
         complete: function(results) {
             const data = results.data.filter(row => row.Nama_SPKLU); 
 
-            // --- A. OLAH DATA UNTUK KPI ATAS ---
             let totalKwh = 0;
             let totalTransaksi = 0;
             
@@ -317,15 +351,14 @@
                 totalTransaksi += row.Total_Transaksi || 0;
             });
 
-            // Tampilkan dengan format tanpa koma desimal
             document.getElementById('kpi-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            // --- B. OLAH DATA UNTUK PETA (LEAFLET) ---
+            // Peta
             data.forEach(row => {
                 if (row.Lat && row.Lng) {
-                    // Membuat marker bulat (circle) agar mudah diberi warna
+                    let kwhFormatted = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
                     L.circleMarker([row.Lat, row.Lng], {
                         radius: 8,
                         fillColor: getMarkerColor(row.Tipe_Charger),
@@ -336,22 +369,19 @@
                     }).addTo(map).bindPopup(`
                         <b>${row.Nama_SPKLU}</b><br>
                         Tipe: ${row.Tipe_Charger}<br>
-                        Pemakaian: ${row.Pemakaian_kWh} kWh
+                        Pemakaian: ${kwhFormatted} kWh
                     `);
                 }
             });
 
-            
-            // --- C. OLAH DATA UNTUK DONUT CHART (R4) ---
+            // Donut Chart R4
             Chart.register(ChartDataLabels);
-
             let summaryR4 = {
                 'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' },
                 'Medium': { kwh: 0, trx: 0, color: '#0070c0' },
                 'Fast': { kwh: 0, trx: 0, color: '#f07b50' }
             };
 
-            // Hitung total per tipe charger (menggunakan .trim() agar aman dari spasi berlebih di GSheet)
             data.forEach(row => {
                 let tipe = (row.Tipe_Charger || '').trim();
                 if (summaryR4[tipe]) {
@@ -362,11 +392,9 @@
 
             const labelsR4 = ['FAST CHARGING', 'MEDIUM CHARGING', 'ULTRA FAST CHARGING'];
             const colorsR4 = [summaryR4['Fast'].color, summaryR4['Medium'].color, summaryR4['Ultra Fast'].color];
-            
             const kwhValues = [summaryR4['Fast'].kwh, summaryR4['Medium'].kwh, summaryR4['Ultra Fast'].kwh];
             const trxValues = [summaryR4['Fast'].trx, summaryR4['Medium'].trx, summaryR4['Ultra Fast'].trx];
 
-            // Tampilkan total di dalam panel R4 tanpa desimal
             document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 
@@ -383,7 +411,7 @@
                                 font: { weight: 'bold', size: 10 },
                                 formatter: (value, ctx) => {
                                     let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    if (sum === 0 || value === 0) return ''; // Cegah error jika data kosong
+                                    if (sum === 0 || value === 0) return '';
                                     return (value * 100 / sum).toFixed(1) + "%";
                                 }
                             }
@@ -415,39 +443,36 @@
             buildLegend('legend-kwh', kwhValues, 'kWh');
             buildLegend('legend-trx', trxValues, 'kali');
 
-            // --- D. OLAH DATA UNTUK GRAFIK TOP 10 (CHART.JS) ---
+            // Top 10 Chart
             const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
             const top10Data = sortedData.slice(0, 10); 
-
-            const labels = top10Data.map(row => row.Nama_SPKLU);
-            const values = top10Data.map(row => row.Pemakaian_kWh);
+            const labelsTop = top10Data.map(row => row.Nama_SPKLU);
+            const valuesTop = top10Data.map(row => row.Pemakaian_kWh);
             const idChargers = top10Data.map(row => row.ID_Charger || '-');
 
-            const ctx = document.getElementById('topChart').getContext('2d');
-            new Chart(ctx, {
+            new Chart(document.getElementById('topChart').getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: labelsTop,
                     datasets: [{
                         label: 'Pemakaian',
-                        data: values,
+                        data: valuesTop,
                         customIds: idChargers,
                         backgroundColor: '#c59b4e',
                         borderWidth: 0
                     }]
                 },
-options: {
+                options: {
                     indexAxis: 'y', 
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        datalabels: { display: false }, // <--- TAMBAHKAN BARIS INI
+                        datalabels: { display: false },
                         tooltip: {
                             callbacks: {
                                 afterTitle: function(context) {
-                                    const index = context[0].dataIndex;
-                                    return `ID Charger: ${context[0].dataset.customIds[index]}`;
+                                    return `ID Charger: ${context[0].dataset.customIds[context[0].dataIndex]}`;
                                 },
                                 label: function(context) {
                                     let val = context.parsed.x || 0;
@@ -458,14 +483,88 @@ options: {
                     }, 
                     scales: {
                         x: { grid: { display: false } },
-                        y: { 
-                            grid: { display: false },
-                            ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 }
-                        }
+                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
                     }
                 }
             });
-            
+
+            // --- E. BOTTOM 10 PEMAKAIAN KWH ---
+            // Mengambil 10 data terendah dari pemakaian kWh (> 0)
+            const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
+            const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
+            const bottom10Data = sortedBottom.slice(0, 10);
+
+            const labelsBottom = bottom10Data.map(row => row.Nama_SPKLU);
+            const valuesBottom = bottom10Data.map(row => row.Pemakaian_kWh);
+
+            new Chart(document.getElementById('bottomChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labelsBottom,
+                    datasets: [{
+                        data: valuesBottom,
+                        backgroundColor: '#8bc34a', // Warna hijau muda sesuai referensi
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { display: false }
+                    }, 
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
+                    }
+                }
+            });
+
+        }
+    });
+
+    // 3. AMBIL DATA SHEET 2 (Tren Tahunan untuk Grafik Batang Vertikal)
+    Papa.parse(csvUrlSheet2, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        complete: function(results) {
+            const trendData = results.data.filter(row => row.Tahun); // Asumsi kolom pertama bernama 'Tahun'
+
+            const years = trendData.map(row => `s.d Mei ${row.Tahun}`);
+            const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
+
+            new Chart(document.getElementById('trendChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        data: kwhTrendValues,
+                        backgroundColor: '#26a69a', // Warna hijau toska
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: (value) => value.toLocaleString('id-ID'),
+                            font: { weight: 'bold', size: 11 },
+                            color: '#333'
+                        }
+                    }, 
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { display: false }, display: false } // Sembunyikan angka sumbu Y agar bersih seperti contoh
+                    }
+                }
+            });
         }
     });
 </script>
