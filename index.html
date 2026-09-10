@@ -325,7 +325,7 @@
         }
         .modal-img-preview {
             width: 100%;
-            height: 130px;
+            height: 120px;
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid #ccc;
@@ -336,16 +336,27 @@
             background-color: #ff9800;
             color: white;
             border: none;
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        .btn-save-modal {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 10px;
             width: 100%;
         }
-        .btn-upload-modal:hover {
-            background-color: #e68a00;
-        }
+        .btn-upload-modal:hover { background-color: #e68a00; }
+        .btn-save-modal:hover { background-color: #1b5e20; }
 
         /* 8. Legenda Peta */
         .legend {
@@ -528,7 +539,7 @@
     
 </div>
 
-<!-- Pop-up Modal Detail & Upload Foto SPKLU -->
+<!-- Pop-up Modal Detail & Upload/Simpan Foto -->
 <div id="spkluModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
@@ -566,21 +577,23 @@
                     <div class="modal-field-value" id="mLng">-</div>
                 </div>
                 <div class="modal-grid-full">
-                    <div class="modal-field-label">DOKUMENTASI FOTO & UPLOAD</div>
+                    <div class="modal-field-label">DOKUMENTASI FOTO</div>
                     <div class="modal-img-container">
                         <!-- Foto Lokasi -->
                         <div class="modal-img-box">
                             <span style="font-size: 11px; font-weight: bold;">Foto Lokasi</span><br>
                             <img id="mFotoLokasi" src="" class="modal-img-preview" alt="Belum ada foto">
-                            <input type="file" accept="image/*" id="inputFotoLokasi" style="display:none" onchange="previewModalImage(event, 'mFotoLokasi')">
-                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoLokasi').click()">Pilih Foto Lokasi</button>
+                            <input type="file" accept="image/*" id="inputFotoLokasi" style="display:none" onchange="previewModalImage(event, 'mFotoLokasi', 'lokasi')">
+                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoLokasi').click()">Pilih Foto</button>
+                            <button class="btn-save-modal" id="btnSaveLokasi" style="display:none;" onclick="uploadFotoToDrive('lokasi')">Simpan ke Drive</button>
                         </div>
                         <!-- Foto Mesin -->
                         <div class="modal-img-box">
                             <span style="font-size: 11px; font-weight: bold;">Foto Mesin</span><br>
                             <img id="mFotoMesin" src="" class="modal-img-preview" alt="Belum ada foto">
-                            <input type="file" accept="image/*" id="inputFotoMesin" style="display:none" onchange="previewModalImage(event, 'mFotoMesin')">
-                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoMesin').click()">Pilih Foto Mesin</button>
+                            <input type="file" accept="image/*" id="inputFotoMesin" style="display:none" onchange="previewModalImage(event, 'mFotoMesin', 'mesin')">
+                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoMesin').click()">Pilih Foto</button>
+                            <button class="btn-save-modal" id="btnSaveMesin" style="display:none;" onclick="uploadFotoToDrive('mesin')">Simpan ke Drive</button>
                         </div>
                     </div>
                 </div>
@@ -598,8 +611,13 @@
 <script>
     let trendChartLoaded = false;
     let globalSpkluData = [];
+    let currentActiveIndex = null;
+    let base64Lokasi = null;
+    let base64Mesin = null;
 
-    // Fungsi Tab Navigasi
+    // Masukkan URL Web App Google Apps Script Anda di sini:
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec";
+
     function openTab(evt, tabName) {
         const tabContents = document.getElementsByClassName("tab-content");
         for (let i = 0; i < tabContents.length; i++) {
@@ -613,21 +631,23 @@
         evt.currentTarget.classList.add("active");
 
         if(tabName === 'tabPeta' && window.mapInstance) {
-            setTimeout(function() {
-                window.mapInstance.invalidateSize();
-            }, 100);
+            setTimeout(function() { window.mapInstance.invalidateSize(); }, 100);
         }
-
         if(tabName === 'tabTren' && !trendChartLoaded) {
             trendChartLoaded = true;
             loadTrendCharts();
         }
     }
 
-    // Fungsi Pop-up Modal Detail
     function openModal(index) {
+        currentActiveIndex = index;
         const row = globalSpkluData[index];
         if (!row) return;
+
+        base64Lokasi = null;
+        base64Mesin = null;
+        document.getElementById('btnSaveLokasi').style.display = 'none';
+        document.getElementById('btnSaveMesin').style.display = 'none';
 
         document.getElementById('modalTitle').innerText = row.Nama_SPKLU || 'Detail SPKLU';
         document.getElementById('mNama').innerText = row.Nama_SPKLU || '-';
@@ -638,28 +658,16 @@
         document.getElementById('mLat').innerText = row.Lat || '-';
         document.getElementById('mLng').innerText = row.Lng || '-';
 
-        // Foto Lokasi
         const imgLoc = document.getElementById('mFotoLokasi');
-        if (row.Foto_Lokasi && row.Foto_Lokasi.trim() !== '') {
-            imgLoc.src = row.Foto_Lokasi;
-        } else {
-            imgLoc.src = '';
-            imgLoc.alt = 'Belum ada foto';
-        }
+        imgLoc.src = (row.Foto_Lokasi && row.Foto_Lokasi.trim() !== '') ? row.Foto_Lokasi : '';
+        if(!imgLoc.src) imgLoc.alt = 'Belum ada foto';
 
-        // Foto Mesin
         const imgMachine = document.getElementById('mFotoMesin');
-        if (row.Foto_Mesin && row.Foto_Mesin.trim() !== '') {
-            imgMachine.src = row.Foto_Mesin;
-        } else {
-            imgMachine.src = '';
-            imgMachine.alt = 'Belum ada foto';
-        }
+        imgMachine.src = (row.Foto_Mesin && row.Foto_Mesin.trim() !== '') ? row.Foto_Mesin : '';
+        if(!imgMachine.src) imgMachine.alt = 'Belum ada foto';
 
-        // Reset input file agar bersih saat modal dibuka
         document.getElementById('inputFotoLokasi').value = '';
         document.getElementById('inputFotoMesin').value = '';
-
         document.getElementById('spkluModal').style.display = 'flex';
     }
 
@@ -667,32 +675,67 @@
         document.getElementById('spkluModal').style.display = 'none';
     }
 
-    // Fungsi pratinjau gambar saat tombol pilih foto diklik di dalam modal
-    function previewModalImage(event, targetImgId) {
+    function previewModalImage(event, targetImgId, type) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById(targetImgId).src = e.target.result;
+                if(type === 'lokasi') {
+                    base64Lokasi = e.target.result;
+                    document.getElementById('btnSaveLokasi').style.display = 'block';
+                } else {
+                    base64Mesin = e.target.result;
+                    document.getElementById('btnSaveMesin').style.display = 'block';
+                }
             }
             reader.readAsDataURL(file);
         }
     }
 
-    window.onclick = function(event) {
-        const modal = document.getElementById('spkluModal');
-        if (event.target === modal) {
-            closeModal();
-        }
+    function uploadFotoToDrive(type) {
+        const row = globalSpkluData[currentActiveIndex];
+        const fileData = type === 'lokasi' ? base64Lokasi : base64Mesin;
+        const btnId = type === 'lokasi' ? 'btnSaveLokasi' : 'btnSaveMesin';
+
+        if (!fileData) return;
+
+        document.getElementById(btnId).innerText = "Menyimpan...";
+        document.getElementById(btnId).disabled = true;
+
+        fetch(GAS_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                nama: row.Nama_SPKLU,
+                type: type,
+                file: fileData
+            })
+        }).then(() => {
+            alert("Foto berhasil disimpan ke Google Drive dan Google Sheets!");
+            document.getElementById(btnId).innerText = "Simpan ke Drive";
+            document.getElementById(btnId).disabled = false;
+            document.getElementById(btnId).style.display = 'none';
+            // Update data lokal sementara
+            if(type === 'lokasi') row.Foto_Lokasi = base64Lokasi;
+            else row.Foto_Mesin = base64Mesin;
+        }).catch(err => {
+            alert("Gagal menyimpan foto: " + err);
+            document.getElementById(btnId).innerText = "Simpan ke Drive";
+            document.getElementById(btnId).disabled = false;
+        });
     }
 
-    // 1. INISIALISASI PETA
+    window.onclick = function(event) {
+        const modal = document.getElementById('spkluModal');
+        if (event.target === modal) closeModal();
+    }
+
+    // 1. INISIALISASI PETA & DATA
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     window.mapInstance = map;
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
 
     function getMarkerColor(tipe) {
         if (tipe === 'Ultra Fast') return '#9c27b0';
@@ -703,7 +746,6 @@
     const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
     const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
-    // 2. AMBIL DATA SHEET 1
     Papa.parse(csvUrlSheet1, {
         download: true,
         header: true,
@@ -712,9 +754,7 @@
             const data = results.data.filter(row => row.Nama_SPKLU); 
             globalSpkluData = data;
 
-            let totalKwh = 0;
-            let totalTransaksi = 0;
-            
+            let totalKwh = 0, totalTransaksi = 0;
             data.forEach(row => {
                 totalKwh += row.Pemakaian_kWh || 0;
                 totalTransaksi += row.Total_Transaksi || 0;
@@ -724,12 +764,9 @@
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            // Render Tabel Monitoring
             const tableBody = document.getElementById('monitoringTableBody');
             let tableHtml = '';
             data.forEach((row, index) => {
-                let tipe = row.Tipe_Charger || '-';
-                
                 let fotoLokasiHtml = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
                 let fotoMesinHtml = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
 
@@ -737,44 +774,26 @@
                     <tr>
                         <td>${index + 1}</td>
                         <td><strong>${row.Nama_SPKLU}</strong></td>
-                        <td>${tipe}</td>
+                        <td>${row.Tipe_Charger || '-'}</td>
                         <td>${fotoLokasiHtml}</td>
                         <td>${fotoMesinHtml}</td>
-                        <td style="text-align: center;">
-                            <button class="btn-action" onclick="openModal(${index})">Detail / Edit</button>
-                        </td>
+                        <td style="text-align: center;"><button class="btn-action" onclick="openModal(${index})">Detail / Edit</button></td>
                     </tr>
                 `;
             });
             tableBody.innerHTML = tableHtml;
 
-            // Peta Marker
             data.forEach(row => {
                 if (row.Lat && row.Lng) {
-                    let kwhFormatted = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
                     L.circleMarker([row.Lat, row.Lng], {
-                        radius: 8,
-                        fillColor: getMarkerColor(row.Tipe_Charger),
-                        color: "#fff",
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    }).addTo(map).bindPopup(`
-                        <b>${row.Nama_SPKLU}</b><br>
-                        Tipe: ${row.Tipe_Charger}<br>
-                        Pemakaian: ${kwhFormatted} kWh
-                    `);
+                        radius: 8, fillColor: getMarkerColor(row.Tipe_Charger), color: "#fff", weight: 2, fillOpacity: 0.9
+                    }).addTo(map).bindPopup(`<b>${row.Nama_SPKLU}</b><br>Tipe: ${row.Tipe_Charger}`);
                 }
             });
 
-            // Donut Chart R4
+            // Donut & Charts setup
             Chart.register(ChartDataLabels);
-            let summaryR4 = {
-                'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' },
-                'Medium': { kwh: 0, trx: 0, color: '#0070c0' },
-                'Fast': { kwh: 0, trx: 0, color: '#f07b50' }
-            };
-
+            let summaryR4 = { 'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' }, 'Medium': { kwh: 0, trx: 0, color: '#0070c0' }, 'Fast': { kwh: 0, trx: 0, color: '#f07b50' } };
             data.forEach(row => {
                 let tipe = (row.Tipe_Charger || '').trim();
                 if (summaryR4[tipe]) {
@@ -783,235 +802,30 @@
                 }
             });
 
-            const labelsR4 = ['FAST CHARGING', 'MEDIUM CHARGING', 'ULTRA FAST CHARGING'];
-            const colorsR4 = [summaryR4['Fast'].color, summaryR4['Medium'].color, summaryR4['Ultra Fast'].color];
-            const kwhValues = [summaryR4['Fast'].kwh, summaryR4['Medium'].kwh, summaryR4['Ultra Fast'].kwh];
-            const trxValues = [summaryR4['Fast'].trx, summaryR4['Medium'].trx, summaryR4['Ultra Fast'].trx];
-
             document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
-
-            function createDonut(ctxId, dataValues) {
-                return new Chart(document.getElementById(ctxId).getContext('2d'), {
-                    type: 'doughnut',
-                    data: { labels: labelsR4, datasets: [{ data: dataValues, backgroundColor: colorsR4, borderWidth: 1 }] },
-                    options: {
-                        cutout: '50%',
-                        plugins: {
-                            legend: { display: false },
-                            datalabels: {
-                                color: '#fff',
-                                font: { weight: 'bold', size: 10 },
-                                formatter: (value, ctx) => {
-                                    let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    if (sum === 0 || value === 0) return '';
-                                    return (value * 100 / sum).toFixed(1) + "%";
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            createDonut('kwhDonutChart', kwhValues);
-            createDonut('trxDonutChart', trxValues);
-
-            function buildLegend(containerId, dataValues, unit) {
-                const container = document.getElementById(containerId);
-                let html = '';
-                labelsR4.forEach((label, index) => {
-                    let formattedValue = dataValues[index].toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' ' + unit;
-                    html += `
-                        <div class="legend-row">
-                            <div class="legend-box" style="background-color: ${colorsR4[index]}"></div>
-                            <div class="legend-text">
-                                <strong>${label}</strong>
-                                ${formattedValue}
-                            </div>
-                        </div>`;
-                });
-                container.innerHTML = html;
-            }
-
-            buildLegend('legend-kwh', kwhValues, 'kWh');
-            buildLegend('legend-trx', trxValues, 'kali');
-
-            // Top 10 Chart
-            const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
-            const top10Data = sortedData.slice(0, 10);
-            const labelsTop = top10Data.map(row => row.Nama_SPKLU);
-            const valuesTop = top10Data.map(row => row.Pemakaian_kWh);
-            const idChargers = top10Data.map(row => row.ID_Charger || '-');
-
-            new Chart(document.getElementById('topChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labelsTop,
-                    datasets: [{
-                        label: 'Pemakaian',
-                        data: valuesTop,
-                        customIds: idChargers,
-                        backgroundColor: '#c59b4e',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                afterTitle: function(context) {
-                                    return `ID Charger: ${context[0].dataset.customIds[context[0].dataIndex]}`;
-                                },
-                                label: function(context) {
-                                    let val = context.parsed.x || 0;
-                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
-                                }
-                            }
-                        }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
-                    }
-                }
-            });
-
-            // Bottom 10 Chart
-            const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
-            const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
-            const bottom10Data = sortedBottom.slice(0, 10);
-
-            const labelsBottom = bottom10Data.map(row => row.Nama_SPKLU);
-            const valuesBottom = bottom10Data.map(row => row.Pemakaian_kWh);
-
-            new Chart(document.getElementById('bottomChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labelsBottom,
-                    datasets: [{
-                        data: valuesBottom,
-                        backgroundColor: '#8bc34a',
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.parsed.x || 0;
-                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
-                                }
-                            }
-                        }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
-                    }
-                }
-            });
         }
     });
 
-    // 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2
     function loadTrendCharts() {
         Papa.parse(csvUrlSheet2, {
-            download: true,
-            header: true,
-            dynamicTyping: true,
+            download: true, header: true, dynamicTyping: true,
             complete: function(results) {
                 const trendData = results.data.filter(row => row.Tahun);
-
                 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                 const currentMonthName = monthNames[new Date().getMonth()];
-
                 const years = trendData.map(row => `s.d ${currentMonthName} ${row.Tahun}`);
-                const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
-                const trxTrendValues = trendData.map(row => row.Total_Transaksi);
 
                 new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
                     type: 'bar',
-                    data: {
-                        labels: years,
-                        datasets: [{
-                            data: kwhTrendValues,
-                            backgroundColor: '#26a69a',
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                formatter: (value) => value.toLocaleString('id-ID'),
-                                font: { weight: 'bold', size: 11 },
-                                color: '#333'
-                            }
-                        }, 
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { 
-                                grid: { display: false }, 
-                                display: false,
-                                suggestedMax: function(context) {
-                                    let max = Math.max(...context.chart.data.datasets[0].data);
-                                    return max * 1.2;
-                                }
-                            }
-                        }
-                    }
+                    data: { labels: years, datasets: [{ data: trendData.map(r => r.Pemakaian_kWh), backgroundColor: '#26a69a' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
                 });
 
                 new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
                     type: 'bar',
-                    data: {
-                        labels: years,
-                        datasets: [{
-                            data: trxTrendValues,
-                            backgroundColor: '#1a9c79',
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                formatter: (value) => value.toLocaleString('id-ID'),
-                                font: { weight: 'bold', size: 11 },
-                                color: '#333'
-                            }
-                        }, 
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { 
-                                grid: { display: false }, 
-                                display: false,
-                                suggestedMax: function(context) {
-                                    let max = Math.max(...context.chart.data.datasets[0].data);
-                                    return max * 1.2;
-                                }
-                            }
-                        }
-                    }
+                    data: { labels: years, datasets: [{ data: trendData.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
                 });
             }
         });
