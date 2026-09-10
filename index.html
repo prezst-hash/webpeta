@@ -3,1052 +3,358 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard SPKLU</title>
+    <title>Dashboard SPKLU PLN</title>
     
-    <!-- CSS Leaflet untuk Peta -->
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js & PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
     <style>
-        :root {
-            --pln-blue: #005a9c;
-            --pln-cyan: #00a2e9;
-            --pln-yellow: #fdb913;
-            --bg-color: #f4f7f6;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        .dashboard-container {
-            max-width: 1200px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        /* 1. Header & KPI */
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--pln-blue);
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-        }
-        .title-area h1 {
-            color: var(--pln-blue);
-            margin: 0;
-            font-size: 28px;
-        }
-        .kpi-area {
-            display: flex;
-            gap: 20px;
-        }
-        .kpi-card {
-            text-align: center;
-            padding: 10px 20px;
-            border-left: 1px solid #ddd;
-        }
-        .kpi-card h3 {
-            margin: 0;
-            font-size: 14px;
-            color: #666;
-        }
-        .kpi-card .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--pln-blue);
-        }
-
-        /* 2. Styling Sistem Tab */
-        .tab-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .tab-button {
-            background-color: #e0e0e0;
-            color: #333;
-            border: none;
-            padding: 10px 20px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .tab-button.active {
-            background-color: var(--pln-blue);
-            color: white;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        /* 3. Styling Panel R4 (Donut Chart) */
-        .r4-panel {
-            background: #fff;
-            border: 2px solid #a6c8e6;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .r4-title {
-            background-color: #003380;
-            color: #fff;
-            font-weight: bold;
-            padding: 5px 20px;
-            display: inline-block;
-            border-bottom-right-radius: 20px;
-            border-top-left-radius: 6px;
-            margin-top: -2px;
-            margin-left: -2px;
-        }
-        .r4-content {
-            display: flex;
-            padding: 15px 20px;
-            align-items: center;
-        }
-        .r4-section {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .vertical-line {
-            width: 2px;
-            background-color: #a6c8e6;
-            height: 120px;
-            margin: 0 20px;
-        }
-        .r4-summary { width: 130px; }
-        .badge-green {
-            background-color: #1a9c79;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        .value-large {
-            font-size: 24px;
-            font-weight: bold;
-            color: #002b5e;
-        }
-        .unit { font-size: 14px; color: #002b5e; }
-        .chart-container { width: 160px; height: 160px; }
-        .custom-legend {
-            font-size: 11px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 160px;
-        }
-        .legend-row { display: flex; align-items: flex-start; gap: 8px; }
-        .legend-box { width: 16px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-        .legend-text strong { display: block; font-size: 11px; }
-
-        /* 4. Konten Utama: 2 Kolom (Grafik & Peta) */
-        .main-content {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .panel {
-            flex: 1;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .panel-header {
-            background-color: var(--pln-blue);
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .panel-body {
-            padding: 15px;
-            height: 400px; 
-        }
-        .panel-peta {
-            display: flex;
-            flex-direction: column; 
-        }
-        #map {
-            width: 100%;
-            flex: 1; 
-            border-radius: 4px;
-        }
-
-        /* 5. Styling Panel Tambahan (Bottom 10 & Tren) */
-        .bottom-panel-header {
-            background-color: #2e7d32; 
-        }
-        .trend-panel-header {
-            background-color: #005a9c; 
-        }
-        .trend-chart-container {
-            width: 100%;
-            height: 320px;
-            position: relative;
-        }
-
-        /* 6. Styling Tabel Monitoring SPKLU */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            max-height: 500px;
-        }
-        .spklu-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: left;
-        }
-        .spklu-table th, .spklu-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
-        }
-        .spklu-table th {
-            background-color: var(--pln-blue);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .spklu-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .img-preview {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-        }
-        .no-photo {
-            font-size: 11px;
-            color: #999;
-            font-style: italic;
-        }
-        .btn-action {
-            background-color: var(--pln-blue);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .btn-action:hover {
-            background-color: #004080;
-        }
-
-        /* 7. Styling Pop-up Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-container {
-            background: white;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: fadeIn 0.3s ease;
-        }
-        .modal-header {
-            background-color: var(--pln-blue);
-            color: white;
-            padding: 12px 20px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-close {
-            background: none; border: none; color: white; font-size: 18px; cursor: pointer; font-weight: bold;
-        }
-        .modal-body {
-            padding: 20px;
-            max-height: 75vh;
-            overflow-y: auto;
-        }
-        .modal-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            font-size: 14px;
-        }
-        .modal-grid-full {
-            grid-column: span 2;
-        }
-        .modal-field-label {
-            font-weight: bold;
-            color: #555;
-            font-size: 12px;
-            margin-bottom: 3px;
-        }
-        .modal-field-value {
-            background: #f4f7f6;
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .modal-img-container {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        .modal-img-box {
-            flex: 1;
-            text-align: center;
-        }
-        .modal-img-preview {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-        .btn-upload-modal {
-            background-color: #ff9800;
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 10px;
-            width: 100%;
-            margin-bottom: 4px;
-        }
-        .btn-save-modal {
-            background-color: #2e7d32;
-            color: white;
-            border: none;
-            padding: 5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 10px;
-            width: 100%;
-        }
-        .btn-upload-modal:hover { background-color: #e68a00; }
-        .btn-save-modal:hover { background-color: #1b5e20; }
-
-        /* 8. Legenda Peta */
-        .legend {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 768px) {
-            .header-section { flex-direction: column; text-align: center; }
-            .kpi-area { flex-direction: column; width: 100%; margin-top: 15px; gap: 0; }
-            .kpi-card { border-left: none; border-bottom: 1px solid #ddd; padding: 15px 0; }
-            .r4-content { flex-direction: column; gap: 20px; }
-            .vertical-line { height: 2px; width: 100%; margin: 10px 0; }
-            .r4-section { flex-direction: column; text-align: center; gap: 15px; }
-            .main-content { flex-direction: column; }
-            .custom-legend { align-items: center; }
-            .modal-grid { grid-template-columns: 1fr; }
-            .modal-grid-full { grid-column: span 1; }
-        }
+        .pln-blue { background-color: #005a9c; }
+        .pln-blue-text { color: #005a9c; }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans text-gray-800 p-4 md:p-6" x-data="spkluApp()">
 
-<div class="dashboard-container">
-    
-    <!-- Bagian 1: Judul dan KPI Atas -->
-    <div class="header-section">
-        <div class="title-area">
-            <h1>PETA & TRANSAKSI</h1>
-            <h1>SPKLU PLN</h1>
-        </div>
-        <div class="kpi-area">
-            <div class="kpi-card">
-                <h3>TOTAL kWh</h3>
-                <div class="value" id="kpi-kwh">0</div>
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        
+        <!-- 1. Header & KPI -->
+        <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-[#005a9c] pb-6 mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold pln-blue-text">PETA & TRANSAKSI</h1>
+                <h1 class="text-2xl md:text-3xl font-bold pln-blue-text">SPKLU PLN</h1>
             </div>
-            <div class="kpi-card">
-                <h3>TOTAL TRANSAKSI</h3>
-                <div class="value" id="kpi-transaksi">0</div>
-            </div>
-            <div class="kpi-card">
-                <h3>TOTAL MESIN SPKLU</h3>
-                <div class="value" id="kpi-spklu">0</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bagian 2: Tombol Tab Navigasi (4 Tab) -->
-    <div class="tab-container">
-        <button class="tab-button active" onclick="openTab(event, 'tabR4')">Transaksi R4</button>
-        <button class="tab-button" onclick="openTab(event, 'tabTren')">Tren Pemakaian</button>
-        <button class="tab-button" onclick="openTab(event, 'tabPeta')" id="btnTabPeta">Peta</button>
-        <button class="tab-button" onclick="openTab(event, 'tabMonitoring')">Monitoring SPKLU</button>
-    </div>
-
-    <!-- Konten Tab 1: Transaksi R4 -->
-    <div id="tabR4" class="tab-content active">
-        <div class="r4-panel">
-            <div class="r4-title">TRANSAKSI SPKLU R4</div>
-            <div class="r4-content">
-                <div class="r4-section">
-                    <div class="r4-summary">
-                        <span class="badge-green">TOTAL KWh</span>
-                        <div class="value-large" id="donut-total-kwh">0</div>
-                        <div class="unit">kWh</div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="kwhDonutChart"></canvas>
-                    </div>
-                    <div class="custom-legend" id="legend-kwh"></div>
+            <div class="flex flex-wrap gap-4 text-center">
+                <div class="px-4 border-l border-gray-300">
+                    <p class="text-xs text-gray-500 font-semibold">TOTAL kWh</p>
+                    <p class="text-2xl font-bold pln-blue-text" x-text="kpiKwh">0</p>
                 </div>
-
-                <div class="vertical-line"></div>
-
-                <div class="r4-section">
-                    <div class="r4-summary">
-                        <span class="badge-green">TOTAL TRANSAKSI</span>
-                        <div class="value-large" id="donut-total-trx">0</div>
-                        <div class="unit">kali</div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="trxDonutChart"></canvas>
-                    </div>
-                    <div class="custom-legend" id="legend-trx"></div>
+                <div class="px-4 border-l border-gray-300">
+                    <p class="text-xs text-gray-500 font-semibold">TOTAL TRANSAKSI</p>
+                    <p class="text-2xl font-bold pln-blue-text" x-text="kpiTrx">0</p>
+                </div>
+                <div class="px-4 border-l border-gray-300">
+                    <p class="text-xs text-gray-500 font-semibold">TOTAL MESIN SPKLU</p>
+                    <p class="text-2xl font-bold pln-blue-text" x-text="kpiSpklu">0</p>
                 </div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="panel">
-                <div class="panel-header">TOP 10 TERTINGGI PEMAKAIAN KWH</div>
-                <div class="panel-body">
-                    <canvas id="topChart"></canvas>
+        <!-- 2. Navigasi Tab -->
+        <div class="flex gap-2 mb-6 flex-wrap">
+            <button @click="activeTab = 'r4'" :class="activeTab === 'r4' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Transaksi R4</button>
+            <button @click="activeTab = 'tren'; loadTren()" :class="activeTab === 'tren' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Tren Pemakaian</button>
+            <button @click="activeTab = 'peta'; setTimeout(() => map.invalidateSize(), 100)" :class="activeTab === 'peta' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Peta</button>
+            <button @click="activeTab = 'monitoring'" :class="activeTab === 'monitoring' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Monitoring SPKLU</button>
+        </div>
+
+        <!-- Tab 1: Transaksi R4 -->
+        <div x-show="activeTab === 'r4'" class="space-y-6">
+            <div class="border-2 border-blue-200 rounded-xl p-4 bg-white relative">
+                <div class="absolute -top-3 left-4 bg-[#003380] text-white text-xs font-bold px-4 py-1 rounded-r-full">TRANSAKSI SPKLU R4</div>
+                <div class="flex flex-col lg:flex-row items-center justify-around gap-6 pt-4">
+                    <div class="text-center"><p class="bg-teal-700 text-white text-xs font-bold px-2 py-1 rounded inline-block mb-2">TOTAL KWh</p><p class="text-2xl font-bold text-blue-900" x-text="donutKwhTotal">0</p><p class="text-sm text-blue-900">kWh</p></div>
+                    <div class="w-40 h-40"><canvas id="kwhDonutChart"></canvas></div>
+                    <div class="hidden lg:block w-0.5 h-28 bg-blue-200"></div>
+                    <div class="text-center"><p class="bg-teal-700 text-white text-xs font-bold px-2 py-1 rounded inline-block mb-2">TOTAL TRANSAKSI</p><p class="text-2xl font-bold text-blue-900" x-text="donutTrxTotal">0</p><p class="text-sm text-blue-900">kali</p></div>
+                    <div class="w-40 h-40"><canvas id="trxDonutChart"></canvas></div>
                 </div>
             </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#005a9c] text-white p-3 font-bold text-center">TOP 10 TERTINGGI PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="topChart"></canvas></div></div>
+                <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-green-700 text-white p-3 font-bold text-center">BOTTOM 10 PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="bottomChart"></canvas></div></div>
+            </div>
+        </div>
 
-            <div class="panel">
-                <div class="panel-header bottom-panel-header">BOTTOM 10 PEMAKAIAN KWH</div>
-                <div class="panel-body">
-                    <canvas id="bottomChart"></canvas>
+        <!-- Tab 2: Tren Pemakaian -->
+        <div x-show="activeTab === 'tren'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#005a9c] text-white p-3 font-bold text-center">TREN PEMAKAIAN KWH SPKLU</div><div class="p-4 h-80"><canvas id="trendKwhChart"></canvas></div></div>
+            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-teal-700 text-white p-3 font-bold text-center">TREN KALI TRANSAKSI SPKLU</div><div class="p-4 h-80"><canvas id="trendTrxChart"></canvas></div></div>
+        </div>
+
+        <!-- Tab 3: Peta Sebaran -->
+        <div x-show="activeTab === 'peta'" class="border rounded-xl overflow-hidden shadow-sm">
+            <div class="bg-[#005a9c] text-white p-3 font-bold text-center">PETA SEBARAN SPKLU</div>
+            <div class="p-4">
+                <div id="map" class="w-full h-[500px] rounded-lg"></div>
+                <div class="flex justify-center gap-6 mt-4 text-xs font-bold">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-purple-600 inline-block"></span> Ultra Fast</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 inline-block"></span> Fast</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-cyan-500 inline-block"></span> Medium</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Konten Tab 2: Tren Pemakaian -->
-    <div id="tabTren" class="tab-content">
-        <div class="main-content">
-            <div class="panel">
-                <div class="panel-header trend-panel-header">TREN PEMAKAIAN KWH SPKLU</div>
-                <div class="panel-body" style="height: 350px;">
-                    <div class="trend-chart-container" style="height: 100%;">
-                        <canvas id="trendKwhChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="panel">
-                <div class="panel-header trend-panel-header" style="background-color: #1a9c79;">TREN KALI TRANSAKSI SPKLU</div>
-                <div class="panel-body" style="height: 350px;">
-                    <div class="trend-chart-container" style="height: 100%;">
-                        <canvas id="trendTrxChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Konten Tab 3: Peta Sebaran -->
-    <div id="tabPeta" class="tab-content">
-        <div class="panel" style="margin-bottom: 20px;">
-            <div class="panel-header">PETA SEBARAN SPKLU</div>
-            <div class="panel-body panel-peta" style="height: 500px;">
-                <div id="map"></div>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot" style="background: #9c27b0; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Ultra Fast Charger</div>
-                    <div class="legend-item"><span class="dot" style="background: #ff9800; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Fast Charger</div>
-                    <div class="legend-item"><span class="dot" style="background: #00a2e9; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span> Medium Charger</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Konten Tab 4: Monitoring SPKLU -->
-    <div id="tabMonitoring" class="tab-content">
-        <div class="panel" style="margin-bottom: 20px;">
-            <div class="panel-header" style="background-color: #2e7d32;">MONITORING DATA & FOTO SPKLU</div>
-            <div class="panel-body" style="height: auto; padding: 10px;">
-                <div class="table-responsive">
-                    <table class="spklu-table">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama SPKLU</th>
-                                <th>Tipe Charger</th>
-                                <th>Foto Lokasi</th>
-                                <th>Foto Mesin</th>
-                                <th style="text-align: center;">Aksi</th>
+        <!-- Tab 4: Monitoring SPKLU -->
+        <div x-show="activeTab === 'monitoring'" class="border rounded-xl overflow-hidden shadow-sm">
+            <div class="bg-green-700 text-white p-3 font-bold text-center">MONITORING DATA & FOTO SPKLU</div>
+            <div class="p-4 overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-[#005a9c] text-white">
+                            <th class="p-3 border">No</th>
+                            <th class="p-3 border">Nama SPKLU</th>
+                            <th class="p-3 border">Tipe Charger</th>
+                            <th class="p-3 border">Foto Lokasi</th>
+                            <th class="p-3 border">Foto Mesin</th>
+                            <th class="p-3 border text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="(row, index) in spkluList" :key="index">
+                            <tr class="hover:bg-gray-50 border">
+                                <td class="p-3 border" x-text="index + 1"></td>
+                                <td class="p-3 border font-bold" x-text="row.Nama_SPKLU"></td>
+                                <td class="p-3 border" x-text="row.Tipe_Charger || '-'"></td>
+                                <td class="p-3 border">
+                                    <template x-if="row.Foto_Lokasi"><img :src="row.Foto_Lokasi" class="w-12 h-12 object-cover rounded border"></template>
+                                    <template x-if="!row.Foto_Lokasi"><span class="text-xs text-gray-400 italic">Belum ada foto</span></template>
+                                </td>
+                                <td class="p-3 border">
+                                    <template x-if="row.Foto_Mesin"><img :src="row.Foto_Mesin" class="w-12 h-12 object-cover rounded border"></template>
+                                    <template x-if="!row.Foto_Mesin"><span class="text-xs text-gray-400 italic">Belum ada foto</span></template>
+                                </td>
+                                <td class="p-3 border text-center">
+                                    <button @click="openModal(index)" class="bg-[#005a9c] hover:bg-blue-800 text-white px-3 py-1.5 rounded text-xs font-bold transition">Detail / Edit</button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody id="monitoringTableBody">
-                            <!-- Data dimuat via JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
+                        </template>
+                    </tbody>
+                </table>
             </div>
         </div>
-    </div>
-    
-</div>
 
-<!-- Pop-up Modal Detail & Upload/Simpan Foto -->
-<div id="spkluModal" class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">
-            <span id="modalTitle">Detail SPKLU</span>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="modal-grid">
-                <div class="modal-grid-full">
-                    <div class="modal-field-label">NAMA SPKLU</div>
-                    <div class="modal-field-value" id="mNama">-</div>
+    </div>
+
+    <!-- Modal Pop-up (Alpine.js State) -->
+    <div x-show="showModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div @click.outside="showModal = false" class="bg-white w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
+            <div class="bg-[#005a9c] text-white p-4 font-bold flex justify-between items-center">
+                <span x-text="selectedRow.Nama_SPKLU"></span>
+                <button @click="showModal = false" class="text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><span class="text-xs text-gray-500 font-bold block">ID CHARGER</span><div class="bg-gray-50 p-2 border rounded" x-text="selectedRow.ID_Charger || '-'"></div></div>
+                    <div><span class="text-xs text-gray-500 font-bold block">TIPE CHARGER</span><div class="bg-gray-50 p-2 border rounded" x-text="selectedRow.Tipe_Charger || '-'"></div></div>
+                    <div><span class="text-xs text-gray-500 font-bold block">PEMAKAIAN KWH</span><div class="bg-gray-50 p-2 border rounded" x-text="(selectedRow.Pemakaian_kWh || 0) + ' kWh'"></div></div>
+                    <div><span class="text-xs text-gray-500 font-bold block">TOTAL TRANSAKSI</span><div class="bg-gray-50 p-2 border rounded" x-text="(selectedRow.Total_Transaksi || 0) + ' kali'"></div></div>
                 </div>
-                <div>
-                    <div class="modal-field-label">ID CHARGER</div>
-                    <div class="modal-field-value" id="mIdCharger">-</div>
-                </div>
-                <div>
-                    <div class="modal-field-label">TIPE CHARGER</div>
-                    <div class="modal-field-value" id="mTipe">-</div>
-                </div>
-                <div>
-                    <div class="modal-field-label">PEMAKAIAN KWH</div>
-                    <div class="modal-field-value" id="mKwh">-</div>
-                </div>
-                <div>
-                    <div class="modal-field-label">TOTAL TRANSAKSI</div>
-                    <div class="modal-field-value" id="mTrx">-</div>
-                </div>
-                <div>
-                    <div class="modal-field-label">LATITUDE</div>
-                    <div class="modal-field-value" id="mLat">-</div>
-                </div>
-                <div>
-                    <div class="modal-field-label">LONGITUDE</div>
-                    <div class="modal-field-value" id="mLng">-</div>
-                </div>
-                <div class="modal-grid-full">
-                    <div class="modal-field-label">DOKUMENTASI FOTO</div>
-                    <div class="modal-img-container">
-                        <!-- Foto Lokasi -->
-                        <div class="modal-img-box">
-                            <span style="font-size: 11px; font-weight: bold;">Foto Lokasi</span><br>
-                            <img id="mFotoLokasi" src="" class="modal-img-preview" alt="Belum ada foto">
-                            <input type="file" accept="image/*" id="inputFotoLokasi" style="display:none" onchange="previewModalImage(event, 'mFotoLokasi', 'lokasi')">
-                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoLokasi').click()">Pilih Foto</button>
-                            <button class="btn-save-modal" id="btnSaveLokasi" style="display:none;" onclick="uploadFotoToDrive('lokasi')">Simpan ke Drive</button>
-                        </div>
-                        <!-- Foto Mesin -->
-                        <div class="modal-img-box">
-                            <span style="font-size: 11px; font-weight: bold;">Foto Mesin</span><br>
-                            <img id="mFotoMesin" src="" class="modal-img-preview" alt="Belum ada foto">
-                            <input type="file" accept="image/*" id="inputFotoMesin" style="display:none" onchange="previewModalImage(event, 'mFotoMesin', 'mesin')">
-                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoMesin').click()">Pilih Foto</button>
-                            <button class="btn-save-modal" id="btnSaveMesin" style="display:none;" onclick="uploadFotoToDrive('mesin')">Simpan ke Drive</button>
-                        </div>
+                <div class="border-t pt-4 grid grid-cols-2 gap-4 text-center">
+                    <div>
+                        <p class="text-xs font-bold mb-1">Foto Lokasi</p>
+                        <img :src="previewLokasi || selectedRow.Foto_Lokasi || 'https://via.placeholder.com/150?text=Belum+Ada+Foto'" class="w-full h-32 object-cover rounded border mb-2">
+                        <input type="file" accept="image/*" class="hidden" id="fileLoc" @change="handleFileSelect($event, 'lokasi')">
+                        <button @click="document.getElementById('fileLoc').click()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-1.5 px-3 rounded w-full mb-1">Pilih Foto</button>
+                        <button x-show="base64Lokasi" @click="uploadToDrive('lokasi')" class="bg-green-700 hover:bg-green-800 text-white text-xs font-bold py-1.5 px-3 rounded w-full" x-text="uploadingLoc ? 'Menyimpan...' : 'Simpan ke Drive'"></button>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold mb-1">Foto Mesin</p>
+                        <img :src="previewMesin || selectedRow.Foto_Mesin || 'https://via.placeholder.com/150?text=Belum+Ada+Foto'" class="w-full h-32 object-cover rounded border mb-2">
+                        <input type="file" accept="image/*" class="hidden" id="fileMach" @change="handleFileSelect($event, 'mesin')">
+                        <button @click="document.getElementById('fileMach').click()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-1.5 px-3 rounded w-full mb-1">Pilih Foto</button>
+                        <button x-show="base64Mesin" @click="uploadToDrive('mesin')" class="bg-green-700 hover:bg-green-800 text-white text-xs font-bold py-1.5 px-3 rounded w-full" x-text="uploadingMach ? 'Menyimpan...' : 'Simpan ke Drive'"></button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Scripts Library -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    
-<script>
-    let trendChartLoaded = false;
-    let globalSpkluData = [];
-    let currentActiveIndex = null;
-    let base64Lokasi = null;
-    let base64Mesin = null;
+    <!-- Script Logika Alpine.js & Chart.js -->
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec";
+        const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
+        const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
-    // Masukkan URL Web App Google Apps Script Anda di sini:
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec";
+        function spkluApp() {
+            return {
+                activeTab: 'r4',
+                kpiKwh: 0,
+                kpiTrx: 0,
+                kpiSpklu: 0,
+                donutKwhTotal: 0,
+                donutTrxTotal: 0,
+                spkluList: [],
+                showModal: false,
+                selectedIndex: null,
+                selectedRow: {},
+                previewLokasi: null,
+                previewMesin: null,
+                base64Lokasi: null,
+                base64Mesin: null,
+                uploadingLoc: false,
+                uploadingMach: false,
+                map: null,
+                trenLoaded: false,
 
-    function openTab(evt, tabName) {
-        const tabContents = document.getElementsByClassName("tab-content");
-        for (let i = 0; i < tabContents.length; i++) {
-            tabContents[i].classList.remove("active");
-        }
-        const tabButtons = document.getElementsByClassName("tab-button");
-        for (let i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].classList.remove("active");
-        }
-        document.getElementById(tabName).classList.add("active");
-        evt.currentTarget.classList.add("active");
+                init() {
+                    // Inisialisasi Peta Leaflet
+                    this.map = L.map('map').setView([-0.0227, 109.3346], 7);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(this.map);
 
-        if(tabName === 'tabPeta' && window.mapInstance) {
-            setTimeout(function() { window.mapInstance.invalidateSize(); }, 100);
-        }
-        if(tabName === 'tabTren' && !trendChartLoaded) {
-            trendChartLoaded = true;
-            loadTrendCharts();
-        }
-    }
+                    // Ambil Data Sheet 1
+                    Papa.parse(csvUrlSheet1, {
+                        download: true, header: true, dynamicTyping: true,
+                        complete: (results) => {
+                            const data = results.data.filter(r => r.Nama_SPKLU);
+                            this.spkluList = data;
+                            this.kpiSpklu = data.length;
 
-    function openModal(index) {
-        currentActiveIndex = index;
-        const row = globalSpkluData[index];
-        if (!row) return;
+                            let tKwh = 0, tTrx = 0;
+                            let r4 = { 'Ultra Fast': {k:0, t:0}, 'Medium': {k:0, t:0}, 'Fast': {k:0, t:0} };
 
-        base64Lokasi = null;
-        base64Mesin = null;
-        document.getElementById('btnSaveLokasi').style.display = 'none';
-        document.getElementById('btnSaveMesin').style.display = 'none';
+                            data.forEach(row => {
+                                tKwh += row.Pemakaian_kWh || 0;
+                                tTrx += row.Total_Transaksi || 0;
+                                let tipe = (row.Tipe_Charger || '').trim();
+                                if(r4[tipe]) { r4[tipe].k += row.Pemakaian_kWh || 0; r4[tipe].t += row.Total_Transaksi || 0; }
 
-        document.getElementById('modalTitle').innerText = row.Nama_SPKLU || 'Detail SPKLU';
-        document.getElementById('mNama').innerText = row.Nama_SPKLU || '-';
-        document.getElementById('mIdCharger').innerText = row.ID_Charger || '-';
-        document.getElementById('mTipe').innerText = row.Tipe_Charger || '-';
-        document.getElementById('mKwh').innerText = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' kWh';
-        document.getElementById('mTrx').innerText = (row.Total_Transaksi || 0).toLocaleString('id-ID') + ' kali';
-        document.getElementById('mLat').innerText = row.Lat || '-';
-        document.getElementById('mLng').innerText = row.Lng || '-';
-
-        const imgLoc = document.getElementById('mFotoLokasi');
-        imgLoc.src = (row.Foto_Lokasi && row.Foto_Lokasi.trim() !== '') ? row.Foto_Lokasi : '';
-        if(!imgLoc.src) imgLoc.alt = 'Belum ada foto';
-
-        const imgMachine = document.getElementById('mFotoMesin');
-        imgMachine.src = (row.Foto_Mesin && row.Foto_Mesin.trim() !== '') ? row.Foto_Mesin : '';
-        if(!imgMachine.src) imgMachine.alt = 'Belum ada foto';
-
-        document.getElementById('inputFotoLokasi').value = '';
-        document.getElementById('inputFotoMesin').value = '';
-        document.getElementById('spkluModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('spkluModal').style.display = 'none';
-    }
-
-    function previewModalImage(event, targetImgId, type) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById(targetImgId).src = e.target.result;
-                if(type === 'lokasi') {
-                    base64Lokasi = e.target.result;
-                    document.getElementById('btnSaveLokasi').style.display = 'block';
-                } else {
-                    base64Mesin = e.target.result;
-                    document.getElementById('btnSaveMesin').style.display = 'block';
-                }
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function uploadFotoToDrive(type) {
-        const row = globalSpkluData[currentActiveIndex];
-        const fileData = type === 'lokasi' ? base64Lokasi : base64Mesin;
-        const btnId = type === 'lokasi' ? 'btnSaveLokasi' : 'btnSaveMesin';
-
-        if (!fileData) return;
-
-        document.getElementById(btnId).innerText = "Menyimpan...";
-        document.getElementById(btnId).disabled = true;
-
-        fetch(GAS_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-                nama: row.Nama_SPKLU,
-                type: type,
-                file: fileData
-            })
-        }).then(() => {
-            alert("Foto berhasil disimpan ke Google Drive dan Google Sheets!");
-            document.getElementById(btnId).innerText = "Simpan ke Drive";
-            document.getElementById(btnId).disabled = false;
-            document.getElementById(btnId).style.display = 'none';
-            
-            if(type === 'lokasi') row.Foto_Lokasi = base64Lokasi;
-            else row.Foto_Mesin = base64Mesin;
-
-            renderMonitoringTable(globalSpkluData);
-        }).catch(err => {
-            alert("Gagal menyimpan foto: " + err);
-            document.getElementById(btnId).innerText = "Simpan ke Drive";
-            document.getElementById(btnId).disabled = false;
-        });
-    }
-
-    function renderMonitoringTable(data) {
-        const tableBody = document.getElementById('monitoringTableBody');
-        let tableHtml = '';
-        data.forEach((row, index) => {
-            let fotoLokasiHtml = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
-            let fotoMesinHtml = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
-
-            tableHtml += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td><strong>${row.Nama_SPKLU}</strong></td>
-                    <td>${row.Tipe_Charger || '-'}</td>
-                    <td>${fotoLokasiHtml}</td>
-                    <td>${fotoMesinHtml}</td>
-                    <td style="text-align: center;"><button class="btn-action" onclick="openModal(${index})">Detail / Edit</button></td>
-                </tr>
-            `;
-        });
-        tableBody.innerHTML = tableHtml;
-    }
-
-    window.onclick = function(event) {
-        const modal = document.getElementById('spkluModal');
-        if (event.target === modal) closeModal();
-    }
-
-    // 1. INISIALISASI PETA
-    const map = L.map('map').setView([-0.0227, 109.3346], 7);
-    window.mapInstance = map;
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-
-    function getMarkerColor(tipe) {
-        if (tipe === 'Ultra Fast') return '#9c27b0';
-        if (tipe === 'Fast') return '#ff9800';
-        return '#00a2e9'; 
-    }
-
-    const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
-    const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
-
-    // 2. AMBIL DATA SHEET 1
-    Papa.parse(csvUrlSheet1, {
-        download: true,
-        header: true,
-        dynamicTyping: true,
-        complete: function(results) {
-            const data = results.data.filter(row => row.Nama_SPKLU); 
-            globalSpkluData = data;
-
-            let totalKwh = 0, totalTransaksi = 0;
-            data.forEach(row => {
-                totalKwh += row.Pemakaian_kWh || 0;
-                totalTransaksi += row.Total_Transaksi || 0;
-            });
-
-            document.getElementById('kpi-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
-            document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
-            document.getElementById('kpi-spklu').innerText = data.length;
-
-            // Render tabel monitoring
-            renderMonitoringTable(data);
-
-            // Peta Marker
-            data.forEach(row => {
-                if (row.Lat && row.Lng) {
-                    let kwhFormatted = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
-                    L.circleMarker([row.Lat, row.Lng], {
-                        radius: 8, fillColor: getMarkerColor(row.Tipe_Charger), color: "#fff", weight: 2, fillOpacity: 0.9
-                    }).addTo(map).bindPopup(`<b>${row.Nama_SPKLU}</b><br>Tipe: ${row.Tipe_Charger}<br>Pemakaian: ${kwhFormatted} kWh`);
-                }
-            });
-
-            // Donut Chart R4
-            Chart.register(ChartDataLabels);
-            let summaryR4 = {
-                'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' },
-                'Medium': { kwh: 0, trx: 0, color: '#0070c0' },
-                'Fast': { kwh: 0, trx: 0, color: '#f07b50' }
-            };
-
-            data.forEach(row => {
-                let tipe = (row.Tipe_Charger || '').trim();
-                if (summaryR4[tipe]) {
-                    summaryR4[tipe].kwh += row.Pemakaian_kWh || 0;
-                    summaryR4[tipe].trx += row.Total_Transaksi || 0;
-                }
-            });
-
-            const labelsR4 = ['FAST CHARGING', 'MEDIUM CHARGING', 'ULTRA FAST CHARGING'];
-            const colorsR4 = [summaryR4['Fast'].color, summaryR4['Medium'].color, summaryR4['Ultra Fast'].color];
-            const kwhValues = [summaryR4['Fast'].kwh, summaryR4['Medium'].kwh, summaryR4['Ultra Fast'].kwh];
-            const trxValues = [summaryR4['Fast'].trx, summaryR4['Medium'].trx, summaryR4['Ultra Fast'].trx];
-
-            document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
-            document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
-
-            function createDonut(ctxId, dataValues) {
-                return new Chart(document.getElementById(ctxId).getContext('2d'), {
-                    type: 'doughnut',
-                    data: { labels: labelsR4, datasets: [{ data: dataValues, backgroundColor: colorsR4, borderWidth: 1 }] },
-                    options: {
-                        cutout: '50%',
-                        plugins: {
-                            legend: { display: false },
-                            datalabels: {
-                                color: '#fff',
-                                font: { weight: 'bold', size: 10 },
-                                formatter: (value, ctx) => {
-                                    let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                    if (sum === 0 || value === 0) return '';
-                                    return (value * 100 / sum).toFixed(1) + "%";
+                                if (row.Lat && row.Lng) {
+                                    let color = tipe === 'Ultra Fast' ? '#9c27b0' : (tipe === 'Fast' ? '#ff9800' : '#00a2e9');
+                                    L.circleMarker([row.Lat, row.Lng], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 })
+                                     .addTo(this.map).bindPopup(`<b>${row.Nama_SPKLU}</b><br>Tipe: ${tipe}`);
                                 }
-                            }
+                            });
+
+                            this.kpiKwh = tKwh.toLocaleString('id-ID', {maximumFractionDigits:0});
+                            this.kpiTrx = tTrx.toLocaleString('id-ID', {maximumFractionDigits:0});
+                            this.donutKwhTotal = this.kpiKwh;
+                            this.donutTrxTotal = this.kpiTrx;
+
+                            // Render Donut & Bar Charts
+                            this.renderCharts(r4, data);
                         }
-                    }
-                });
-            }
-
-            createDonut('kwhDonutChart', kwhValues);
-            createDonut('trxDonutChart', trxValues);
-
-            function buildLegend(containerId, dataValues, unit) {
-                const container = document.getElementById(containerId);
-                let html = '';
-                labelsR4.forEach((label, index) => {
-                    let formattedValue = dataValues[index].toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' ' + unit;
-                    html += `
-                        <div class="legend-row">
-                            <div class="legend-box" style="background-color: ${colorsR4[index]}"></div>
-                            <div class="legend-text">
-                                <strong>${label}</strong>
-                                ${formattedValue}
-                            </div>
-                        </div>`;
-                });
-                container.innerHTML = html;
-            }
-
-            buildLegend('legend-kwh', kwhValues, 'kWh');
-            buildLegend('legend-trx', trxValues, 'kali');
-
-            // Top 10 Chart
-            const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
-            const top10Data = sortedData.slice(0, 10);
-            const labelsTop = top10Data.map(row => row.Nama_SPKLU);
-            const valuesTop = top10Data.map(row => row.Pemakaian_kWh);
-            const idChargers = top10Data.map(row => row.ID_Charger || '-');
-
-            new Chart(document.getElementById('topChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labelsTop,
-                    datasets: [{
-                        label: 'Pemakaian',
-                        data: valuesTop,
-                        customIds: idChargers,
-                        backgroundColor: '#c59b4e',
-                        borderWidth: 0
-                    }]
+                    });
                 },
-                options: {
-                    indexAxis: 'y', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                afterTitle: function(context) {
-                                    return `ID Charger: ${context[0].dataset.customIds[context[0].dataIndex]}`;
-                                },
-                                label: function(context) {
-                                    let val = context.parsed.x || 0;
-                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
-                                }
-                            }
-                        }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
-                    }
-                }
-            });
 
-            // Bottom 10 Chart
-            const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
-            const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
-            const bottom10Data = sortedBottom.slice(0, 10);
+                renderCharts(r4, data) {
+                    Chart.register(ChartDataLabels);
+                    const labelsR4 = ['FAST CHARGING', 'MEDIUM CHARGING', 'ULTRA FAST CHARGING'];
+                    const colorsR4 = ['#f07b50', '#0070c0', '#9c27b0'];
 
-            const labelsBottom = bottom10Data.map(row => row.Nama_SPKLU);
-            const valuesBottom = bottom10Data.map(row => row.Pemakaian_kWh);
+                    new Chart(document.getElementById('kwhDonutChart'), {
+                        type: 'doughnut',
+                        data: { labels: labelsR4, datasets: [{ data: [r4['Fast'].k, r4['Medium'].k, r4['Ultra Fast'].k], backgroundColor: colorsR4 }] },
+                        options: { cutout: '50%', plugins: { legend: { display: false }, datalabels: { color: '#fff', font: {size: 9}, formatter: (v, c) => { let sum = c.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); return sum ? (v*100/sum).toFixed(1)+'%' : ''; } } } }
+                    });
 
-            new Chart(document.getElementById('bottomChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labelsBottom,
-                    datasets: [{
-                        data: valuesBottom,
-                        backgroundColor: '#8bc34a',
-                        borderWidth: 0
-                    }]
+                    new Chart(document.getElementById('trxDonutChart'), {
+                        type: 'doughnut',
+                        data: { labels: labelsR4, datasets: [{ data: [r4['Fast'].t, r4['Medium'].t, r4['Ultra Fast'].t], backgroundColor: colorsR4 }] },
+                        options: { cutout: '50%', plugins: { legend: { display: false }, datalabels: { color: '#fff', font: {size: 9}, formatter: (v, c) => { let sum = c.chart.data.datasets[0].data.reduce((a,b)=>a+b,0); return sum ? (v*100/sum).toFixed(1)+'%' : ''; } } } }
+                    });
+
+                    const top10 = [...data].sort((a,b) => b.Pemakaian_kWh - a.Pemakaian_kWh).slice(0, 10);
+                    new Chart(document.getElementById('topChart'), {
+                        type: 'bar',
+                        data: { labels: top10.map(r => r.Nama_SPKLU), datasets: [{ data: top10.map(r => r.Pemakaian_kWh), backgroundColor: '#c59b4e' }] },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels:{display:false} }, scales: { x:{grid:{display:false}}, y:{grid:{display:false}} } }
+                    });
+
+                    const bottom10 = [...data].filter(r => (r.Pemakaian_kWh||0) > 0).sort((a,b) => a.Pemakaian_kWh - b.Pemakaian_kWh).slice(0, 10);
+                    new Chart(document.getElementById('bottomChart'), {
+                        type: 'bar',
+                        data: { labels: bottom10.map(r => r.Nama_SPKLU), datasets: [{ data: bottom10.map(r => r.Pemakaian_kWh), backgroundColor: '#8bc34a' }] },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels:{display:false} }, scales: { x:{grid:{display:false}}, y:{grid:{display:false}} } }
+                    });
                 },
-                options: {
-                    indexAxis: 'y', 
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        datalabels: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.parsed.x || 0;
-                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
-                                }
-                            }
+
+                loadTren() {
+                    if (this.trenLoaded) return;
+                    this.trenLoaded = true;
+                    Papa.parse(csvUrlSheet2, {
+                        download: true, header: true, dynamicTyping: true,
+                        complete: (results) => {
+                            const trend = results.data.filter(r => r.Tahun);
+                            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                            const curMonth = months[new Date().getMonth()];
+                            const years = trend.map(r => `s.d ${curMonth} ${r.Tahun}`);
+
+                            new Chart(document.getElementById('trendKwhChart'), {
+                                type: 'bar',
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#26a69a' }] },
+                                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
+                            });
+
+                            new Chart(document.getElementById('trendTrxChart'), {
+                                type: 'bar',
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
+                                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
+                            });
                         }
-                    }, 
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
+                    });
+                },
+
+                openModal(index) {
+                    this.selectedIndex = index;
+                    this.selectedRow = this.spkluList[index];
+                    this.previewLokasi = null;
+                    this.previewMesin = null;
+                    this.base64Lokasi = null;
+                    this.base64Mesin = null;
+                    this.showModal = true;
+                },
+
+                handleFileSelect(event, type) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            if (type === 'lokasi') {
+                                this.previewLokasi = e.target.result;
+                                this.base64Lokasi = e.target.result;
+                            } else {
+                                this.previewMesin = e.target.result;
+                                this.base64Mesin = e.target.result;
+                            }
+                        };
+                        reader.readAsDataURL(file);
                     }
+                },
+
+                uploadToDrive(type) {
+                    const fileData = type === 'lokasi' ? this.base64Lokasi : this.base64Mesin;
+                    if (!fileData) return;
+
+                    if (type === 'lokasi') this.uploadingLoc = true;
+                    else this.uploadingMach = true;
+
+                    fetch(GAS_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            rowIndex: this.selectedIndex + 2,
+                            type: type,
+                            file: fileData
+                        })
+                    }).then(() => {
+                        alert("Foto berhasil disimpan ke Google Drive & Sheets!");
+                        if (type === 'lokasi') {
+                            this.selectedRow.Foto_Lokasi = this.base64Lokasi;
+                            this.uploadingLoc = false;
+                            this.base64Lokasi = null;
+                        } else {
+                            this.selectedRow.Foto_Mesin = this.base64Mesin;
+                            this.uploadingMach = false;
+                            this.base64Mesin = null;
+                        }
+                    }).catch(err => {
+                        alert("Gagal menyimpan: " + err);
+                        this.uploadingLoc = false;
+                        this.uploadingMach = false;
+                    });
                 }
-            });
-        }
-    });
-
-    // 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2
-    function loadTrendCharts() {
-        Papa.parse(csvUrlSheet2, {
-            download: true,
-            header: true,
-            dynamicTyping: true,
-            complete: function(results) {
-                const trendData = results.data.filter(row => row.Tahun);
-
-                const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-                const currentMonthName = monthNames[new Date().getMonth()];
-
-                const years = trendData.map(row => `s.d ${currentMonthName} ${row.Tahun}`);
-                const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
-                const trxTrendValues = trendData.map(row => row.Total_Transaksi);
-
-                new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: years,
-                        datasets: [{
-                            data: kwhTrendValues,
-                            backgroundColor: '#26a69a',
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                formatter: (value) => value.toLocaleString('id-ID'),
-                                font: { weight: 'bold', size: 11 },
-                                color: '#333'
-                            }
-                        }, 
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { 
-                                grid: { display: false }, 
-                                display: false,
-                                suggestedMax: function(context) {
-                                    let max = Math.max(...context.chart.data.datasets[0].data);
-                                    return max * 1.2;
-                                }
-                            }
-                        }
-                    }
-                });
-
-                new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: years,
-                        datasets: [{
-                            data: trxTrendValues,
-                            backgroundColor: '#1a9c79',
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                formatter: (value) => value.toLocaleString('id-ID'),
-                                font: { weight: 'bold', size: 11 },
-                                color: '#333'
-                            }
-                        }, 
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { 
-                                grid: { display: false }, 
-                                display: false,
-                                suggestedMax: function(context) {
-                                    let max = Math.max(...context.chart.data.datasets[0].data);
-                                    return max * 1.2;
-                                }
-                            }
-                        }
-                    }
-                });
             }
-        });
-    }
-</script>
+        }
+    </script>
 </body>
 </html>
