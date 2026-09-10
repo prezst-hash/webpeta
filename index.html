@@ -375,7 +375,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsif untuk Layar HP */
         @media (max-width: 768px) {
             .header-section { flex-direction: column; text-align: center; }
             .kpi-area { flex-direction: column; width: 100%; margin-top: 15px; gap: 0; }
@@ -615,7 +614,7 @@
     let base64Lokasi = null;
     let base64Mesin = null;
 
-    // Pastikan URL Web App Google Apps Script Anda sudah terpasang di bawah ini:
+    // Masukkan URL Web App Google Apps Script Anda di sini:
     const GAS_URL = "MASUKKAN_URL_WEB_APP_ANDA_DISINI";
 
     function openTab(evt, tabName) {
@@ -718,14 +717,9 @@
             document.getElementById(btnId).disabled = false;
             document.getElementById(btnId).style.display = 'none';
             
-            // Perbarui data lokal secara instan
-            if(type === 'lokasi') {
-                row.Foto_Lokasi = base64Lokasi;
-            } else {
-                row.Foto_Mesin = base64Mesin;
-            }
+            if(type === 'lokasi') row.Foto_Lokasi = base64Lokasi;
+            else row.Foto_Mesin = base64Mesin;
 
-            // Render ulang tabel secara instan agar foto langsung tampil
             renderMonitoringTable(globalSpkluData);
         }).catch(err => {
             alert("Gagal menyimpan foto: " + err);
@@ -760,7 +754,7 @@
         if (event.target === modal) closeModal();
     }
 
-    // 1. INISIALISASI PETA & DATA
+    // 1. INISIALISASI PETA
     const map = L.map('map').setView([-0.0227, 109.3346], 7);
     window.mapInstance = map;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
@@ -774,6 +768,7 @@
     const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
     const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
+    // 2. AMBIL DATA SHEET 1
     Papa.parse(csvUrlSheet1, {
         download: true,
         header: true,
@@ -792,20 +787,27 @@
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            // Render tabel monitoring menggunakan fungsi terpisah
+            // Render tabel monitoring
             renderMonitoringTable(data);
 
+            // Peta Marker
             data.forEach(row => {
                 if (row.Lat && row.Lng) {
+                    let kwhFormatted = (row.Pemakaian_kWh || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
                     L.circleMarker([row.Lat, row.Lng], {
                         radius: 8, fillColor: getMarkerColor(row.Tipe_Charger), color: "#fff", weight: 2, fillOpacity: 0.9
-                    }).addTo(map).bindPopup(`<b>${row.Nama_SPKLU}</b><br>Tipe: ${row.Tipe_Charger}`);
+                    }).addTo(map).bindPopup(`<b>${row.Nama_SPKLU}</b><br>Tipe: ${row.Tipe_Charger}<br>Pemakaian: ${kwhFormatted} kWh`);
                 }
             });
 
-            // Donut & Charts setup
+            // Donut Chart R4
             Chart.register(ChartDataLabels);
-            let summaryR4 = { 'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' }, 'Medium': { kwh: 0, trx: 0, color: '#0070c0' }, 'Fast': { kwh: 0, trx: 0, color: '#f07b50' } };
+            let summaryR4 = {
+                'Ultra Fast': { kwh: 0, trx: 0, color: '#9c27b0' },
+                'Medium': { kwh: 0, trx: 0, color: '#0070c0' },
+                'Fast': { kwh: 0, trx: 0, color: '#f07b50' }
+            };
+
             data.forEach(row => {
                 let tipe = (row.Tipe_Charger || '').trim();
                 if (summaryR4[tipe]) {
@@ -814,30 +816,235 @@
                 }
             });
 
+            const labelsR4 = ['FAST CHARGING', 'MEDIUM CHARGING', 'ULTRA FAST CHARGING'];
+            const colorsR4 = [summaryR4['Fast'].color, summaryR4['Medium'].color, summaryR4['Ultra Fast'].color];
+            const kwhValues = [summaryR4['Fast'].kwh, summaryR4['Medium'].kwh, summaryR4['Ultra Fast'].kwh];
+            const trxValues = [summaryR4['Fast'].trx, summaryR4['Medium'].trx, summaryR4['Ultra Fast'].trx];
+
             document.getElementById('donut-total-kwh').innerText = totalKwh.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('donut-total-trx').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+
+            function createDonut(ctxId, dataValues) {
+                return new Chart(document.getElementById(ctxId).getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: labelsR4, datasets: [{ data: dataValues, backgroundColor: colorsR4, borderWidth: 1 }] },
+                    options: {
+                        cutout: '50%',
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#fff',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: (value, ctx) => {
+                                    let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    if (sum === 0 || value === 0) return '';
+                                    return (value * 100 / sum).toFixed(1) + "%";
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createDonut('kwhDonutChart', kwhValues);
+            createDonut('trxDonutChart', trxValues);
+
+            function buildLegend(containerId, dataValues, unit) {
+                const container = document.getElementById(containerId);
+                let html = '';
+                labelsR4.forEach((label, index) => {
+                    let formattedValue = dataValues[index].toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' ' + unit;
+                    html += `
+                        <div class="legend-row">
+                            <div class="legend-box" style="background-color: ${colorsR4[index]}"></div>
+                            <div class="legend-text">
+                                <strong>${label}</strong>
+                                ${formattedValue}
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            }
+
+            buildLegend('legend-kwh', kwhValues, 'kWh');
+            buildLegend('legend-trx', trxValues, 'kali');
+
+            // Top 10 Chart
+            const sortedData = [...data].sort((a, b) => b.Pemakaian_kWh - a.Pemakaian_kWh);
+            const top10Data = sortedData.slice(0, 10);
+            const labelsTop = top10Data.map(row => row.Nama_SPKLU);
+            const valuesTop = top10Data.map(row => row.Pemakaian_kWh);
+            const idChargers = top10Data.map(row => row.ID_Charger || '-');
+
+            new Chart(document.getElementById('topChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labelsTop,
+                    datasets: [{
+                        label: 'Pemakaian',
+                        data: valuesTop,
+                        customIds: idChargers,
+                        backgroundColor: '#c59b4e',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                afterTitle: function(context) {
+                                    return `ID Charger: ${context[0].dataset.customIds[context[0].dataIndex]}`;
+                                },
+                                label: function(context) {
+                                    let val = context.parsed.x || 0;
+                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
+                    }
+                }
+            });
+
+            // Bottom 10 Chart
+            const validDataBottom = data.filter(row => (row.Pemakaian_kWh || 0) > 0);
+            const sortedBottom = [...validDataBottom].sort((a, b) => a.Pemakaian_kWh - b.Pemakaian_kWh);
+            const bottom10Data = sortedBottom.slice(0, 10);
+
+            const labelsBottom = bottom10Data.map(row => row.Nama_SPKLU);
+            const valuesBottom = bottom10Data.map(row => row.Pemakaian_kWh);
+
+            new Chart(document.getElementById('bottomChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labelsBottom,
+                    datasets: [{
+                        data: valuesBottom,
+                        backgroundColor: '#8bc34a',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        datalabels: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.parsed.x || 0;
+                                    return `Pemakaian: ${val.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kWh`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
+                    }
+                }
+            });
         }
     });
 
+    // 3. FUNGSI MEMUAT GRAFIK TREN DARI SHEET 2
     function loadTrendCharts() {
         Papa.parse(csvUrlSheet2, {
-            download: true, header: true, dynamicTyping: true,
+            download: true,
+            header: true,
+            dynamicTyping: true,
             complete: function(results) {
                 const trendData = results.data.filter(row => row.Tahun);
+
                 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                 const currentMonthName = monthNames[new Date().getMonth()];
+
                 const years = trendData.map(row => `s.d ${currentMonthName} ${row.Tahun}`);
+                const kwhTrendValues = trendData.map(row => row.Pemakaian_kWh);
+                const trxTrendValues = trendData.map(row => row.Total_Transaksi);
 
                 new Chart(document.getElementById('trendKwhChart').getContext('2d'), {
                     type: 'bar',
-                    data: { labels: years, datasets: [{ data: trendData.map(r => r.Pemakaian_kWh), backgroundColor: '#26a69a' }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            data: kwhTrendValues,
+                            backgroundColor: '#26a69a',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: (value) => value.toLocaleString('id-ID'),
+                                font: { weight: 'bold', size: 11 },
+                                color: '#333'
+                            }
+                        }, 
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { 
+                                grid: { display: false }, 
+                                display: false,
+                                suggestedMax: function(context) {
+                                    let max = Math.max(...context.chart.data.datasets[0].data);
+                                    return max * 1.2;
+                                }
+                            }
+                        }
+                    }
                 });
 
-                new DataCharts = new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
+                new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
                     type: 'bar',
-                    data: { labels: years, datasets: [{ data: trendData.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
+                    data: {
+                        labels: years,
+                        datasets: [{
+                            data: trxTrendValues,
+                            backgroundColor: '#1a9c79',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                formatter: (value) => value.toLocaleString('id-ID'),
+                                font: { weight: 'bold', size: 11 },
+                                color: '#333'
+                            }
+                        }, 
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { 
+                                grid: { display: false }, 
+                                display: false,
+                                suggestedMax: function(context) {
+                                    let max = Math.max(...context.chart.data.datasets[0].data);
+                                    return max * 1.2;
+                                }
+                            }
+                        }
+                    }
                 });
             }
         });
