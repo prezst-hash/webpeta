@@ -325,11 +325,26 @@
         }
         .modal-img-preview {
             width: 100%;
-            height: 140px;
+            height: 130px;
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid #ccc;
             margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        .btn-upload-modal {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            width: 100%;
+        }
+        .btn-upload-modal:hover {
+            background-color: #e68a00;
         }
 
         /* 8. Legenda Peta */
@@ -485,7 +500,7 @@
         </div>
     </div>
 
-    <!-- Konten Tab 4: Monitoring SPKLU (Tabel ringkas + Tombol Aksi) -->
+    <!-- Konten Tab 4: Monitoring SPKLU -->
     <div id="tabMonitoring" class="tab-content">
         <div class="panel" style="margin-bottom: 20px;">
             <div class="panel-header" style="background-color: #2e7d32;">MONITORING DATA & FOTO SPKLU</div>
@@ -513,7 +528,7 @@
     
 </div>
 
-<!-- Pop-up Modal Detail SPKLU -->
+<!-- Pop-up Modal Detail & Upload Foto SPKLU -->
 <div id="spkluModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
@@ -551,15 +566,21 @@
                     <div class="modal-field-value" id="mLng">-</div>
                 </div>
                 <div class="modal-grid-full">
-                    <div class="modal-field-label">DOKUMENTASI FOTO</div>
+                    <div class="modal-field-label">DOKUMENTASI FOTO & UPLOAD</div>
                     <div class="modal-img-container">
+                        <!-- Foto Lokasi -->
                         <div class="modal-img-box">
                             <span style="font-size: 11px; font-weight: bold;">Foto Lokasi</span><br>
                             <img id="mFotoLokasi" src="" class="modal-img-preview" alt="Belum ada foto">
+                            <input type="file" accept="image/*" id="inputFotoLokasi" style="display:none" onchange="previewModalImage(event, 'mFotoLokasi')">
+                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoLokasi').click()">Pilih Foto Lokasi</button>
                         </div>
+                        <!-- Foto Mesin -->
                         <div class="modal-img-box">
                             <span style="font-size: 11px; font-weight: bold;">Foto Mesin</span><br>
                             <img id="mFotoMesin" src="" class="modal-img-preview" alt="Belum ada foto">
+                            <input type="file" accept="image/*" id="inputFotoMesin" style="display:none" onchange="previewModalImage(event, 'mFotoMesin')">
+                            <button class="btn-upload-modal" onclick="document.getElementById('inputFotoMesin').click()">Pilih Foto Mesin</button>
                         </div>
                     </div>
                 </div>
@@ -576,7 +597,7 @@
     
 <script>
     let trendChartLoaded = false;
-    let globalSpkluData = []; // Menyimpan data mentah untuk modal
+    let globalSpkluData = [];
 
     // Fungsi Tab Navigasi
     function openTab(evt, tabName) {
@@ -621,7 +642,6 @@
         const imgLoc = document.getElementById('mFotoLokasi');
         if (row.Foto_Lokasi && row.Foto_Lokasi.trim() !== '') {
             imgLoc.src = row.Foto_Lokasi;
-            imgLoc.style.display = 'block';
         } else {
             imgLoc.src = '';
             imgLoc.alt = 'Belum ada foto';
@@ -631,11 +651,14 @@
         const imgMachine = document.getElementById('mFotoMesin');
         if (row.Foto_Mesin && row.Foto_Mesin.trim() !== '') {
             imgMachine.src = row.Foto_Mesin;
-            imgMachine.style.display = 'block';
         } else {
             imgMachine.src = '';
             imgMachine.alt = 'Belum ada foto';
         }
+
+        // Reset input file agar bersih saat modal dibuka
+        document.getElementById('inputFotoLokasi').value = '';
+        document.getElementById('inputFotoMesin').value = '';
 
         document.getElementById('spkluModal').style.display = 'flex';
     }
@@ -644,7 +667,18 @@
         document.getElementById('spkluModal').style.display = 'none';
     }
 
-    // Tutup modal jika klik di luar area container
+    // Fungsi pratinjau gambar saat tombol pilih foto diklik di dalam modal
+    function previewModalImage(event, targetImgId) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(targetImgId).src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
     window.onclick = function(event) {
         const modal = document.getElementById('spkluModal');
         if (event.target === modal) {
@@ -676,7 +710,7 @@
         dynamicTyping: true,
         complete: function(results) {
             const data = results.data.filter(row => row.Nama_SPKLU); 
-            globalSpkluData = data; // Simpan ke variabel global
+            globalSpkluData = data;
 
             let totalKwh = 0;
             let totalTransaksi = 0;
@@ -690,7 +724,7 @@
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            // Render Tabel Monitoring (Kolom angka diganti tombol Aksi)
+            // Render Tabel Monitoring
             const tableBody = document.getElementById('monitoringTableBody');
             let tableHtml = '';
             data.forEach((row, index) => {
