@@ -615,8 +615,8 @@
     let base64Lokasi = null;
     let base64Mesin = null;
 
-    // Masukkan URL Web App Google Apps Script Anda di sini:
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec";
+    // Pastikan URL Web App Google Apps Script Anda sudah terpasang di bawah ini:
+    const GAS_URL = "MASUKKAN_URL_WEB_APP_ANDA_DISINI";
 
     function openTab(evt, tabName) {
         const tabContents = document.getElementsByClassName("tab-content");
@@ -717,14 +717,42 @@
             document.getElementById(btnId).innerText = "Simpan ke Drive";
             document.getElementById(btnId).disabled = false;
             document.getElementById(btnId).style.display = 'none';
-            // Update data lokal sementara
-            if(type === 'lokasi') row.Foto_Lokasi = base64Lokasi;
-            else row.Foto_Mesin = base64Mesin;
+            
+            // Perbarui data lokal secara instan
+            if(type === 'lokasi') {
+                row.Foto_Lokasi = base64Lokasi;
+            } else {
+                row.Foto_Mesin = base64Mesin;
+            }
+
+            // Render ulang tabel secara instan agar foto langsung tampil
+            renderMonitoringTable(globalSpkluData);
         }).catch(err => {
             alert("Gagal menyimpan foto: " + err);
             document.getElementById(btnId).innerText = "Simpan ke Drive";
             document.getElementById(btnId).disabled = false;
         });
+    }
+
+    function renderMonitoringTable(data) {
+        const tableBody = document.getElementById('monitoringTableBody');
+        let tableHtml = '';
+        data.forEach((row, index) => {
+            let fotoLokasiHtml = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
+            let fotoMesinHtml = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
+
+            tableHtml += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${row.Nama_SPKLU}</strong></td>
+                    <td>${row.Tipe_Charger || '-'}</td>
+                    <td>${fotoLokasiHtml}</td>
+                    <td>${fotoMesinHtml}</td>
+                    <td style="text-align: center;"><button class="btn-action" onclick="openModal(${index})">Detail / Edit</button></td>
+                </tr>
+            `;
+        });
+        tableBody.innerHTML = tableHtml;
     }
 
     window.onclick = function(event) {
@@ -764,24 +792,8 @@
             document.getElementById('kpi-transaksi').innerText = totalTransaksi.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             document.getElementById('kpi-spklu').innerText = data.length;
 
-            const tableBody = document.getElementById('monitoringTableBody');
-            let tableHtml = '';
-            data.forEach((row, index) => {
-                let fotoLokasiHtml = row.Foto_Lokasi ? `<img src="${row.Foto_Lokasi}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
-                let fotoMesinHtml = row.Foto_Mesin ? `<img src="${row.Foto_Mesin}" class="img-preview" alt="Foto">` : `<span class="no-photo">Belum ada foto</span>`;
-
-                tableHtml += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${row.Nama_SPKLU}</strong></td>
-                        <td>${row.Tipe_Charger || '-'}</td>
-                        <td>${fotoLokasiHtml}</td>
-                        <td>${fotoMesinHtml}</td>
-                        <td style="text-align: center;"><button class="btn-action" onclick="openModal(${index})">Detail / Edit</button></td>
-                    </tr>
-                `;
-            });
-            tableBody.innerHTML = tableHtml;
+            // Render tabel monitoring menggunakan fungsi terpisah
+            renderMonitoringTable(data);
 
             data.forEach(row => {
                 if (row.Lat && row.Lng) {
@@ -822,7 +834,7 @@
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
                 });
 
-                new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
+                new DataCharts = new Chart(document.getElementById('trendTrxChart').getContext('2d'), {
                     type: 'bar',
                     data: { labels: years, datasets: [{ data: trendData.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
