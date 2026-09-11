@@ -49,14 +49,16 @@
                     <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiTrx">0</p>
                     <span class="text-[10px] text-gray-400">kali</span>
                 </div>
+                <!-- Kartu Total Lokasi (Unik Berdasarkan Nama SPKLU) -->
                 <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
                     <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL LOKASI</p>
-                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiSpklu">0</p>
+                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiLokasi">0</p>
                     <span class="text-[10px] text-gray-400">lokasi</span>
                 </div>
+                <!-- Kartu Total Charger (Jumlah Seluruh Baris / Mesin) -->
                 <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
                     <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL CHARGER</p>
-                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiSpklu">0</p>
+                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiCharger">0</p>
                     <span class="text-[10px] text-gray-400">charger</span>
                 </div>
             </div>
@@ -128,7 +130,7 @@
         <!-- Tab 2: Tren Pemakaian -->
         <div x-show="activeTab === 'tren'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="border rounded-xl overflow-hidden shadow-sm">
-                <div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">TREN PEMAKAIAN KWH SPKLU</div>
+                <div class="tosca-header text-white p-3 font-bold text-center text-sm">TREN PEMAKAIAN KWH SPKLU</div>
                 <div class="p-4 h-80"><canvas id="trendKwhChart"></canvas></div>
             </div>
             <div class="border rounded-xl overflow-hidden shadow-sm">
@@ -162,7 +164,8 @@
                 activeTab: 'r4',
                 kpiKwh: 0,
                 kpiTrx: 0,
-                kpiSpklu: 0,
+                kpiLokasi: 0,   // Total lokasi unik berdasarkan nama SPKLU
+                kpiCharger: 0,  // Total charger berdasarkan jumlah baris
                 donutKwhTotal: 0,
                 donutTrxTotal: 0,
                 nihilList: [],
@@ -177,7 +180,13 @@
                         download: true, header: true, dynamicTyping: true,
                         complete: (results) => {
                             const data = results.data.filter(r => r.Nama_SPKLU);
-                            this.kpiSpklu = data.length;
+                            
+                            // Menghitung Total Charger (jumlah total baris data)
+                            this.kpiCharger = data.length;
+
+                            // Menghitung Total Lokasi unik (jika nama SPKLU sama meski beda ID Charger, dihitung 1 lokasi)
+                            const uniqueLocations = new Set(data.map(r => (r.Nama_SPKLU || '').trim()));
+                            this.kpiLokasi = uniqueLocations.size;
 
                             let tKwh = 0, tTrx = 0;
                             let r4 = { 'Ultra Fast': {k:0, t:0}, 'Medium': {k:0, t:0}, 'Fast': {k:0, t:0} };
@@ -250,14 +259,12 @@
                             const curMonth = months[new Date().getMonth()];
                             const years = trend.map(r => `s.d ${curMonth} ${r.Tahun}`);
 
-                            // Grafik Kiri (Tren Pemakaian kWh): Warna batang diubah ke Biru (#003380)
                             new Chart(document.getElementById('trendKwhChart'), {
                                 type: 'bar',
-                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#003380' }] },
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#1a9c79' }] },
                                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
                             });
 
-                            // Grafik Kanan (Tren Kali Transaksi): Warna batang tetap Hijau Tosca (#1a9c79)
                             new Chart(document.getElementById('trendTrxChart'), {
                                 type: 'bar',
                                 data: { 
