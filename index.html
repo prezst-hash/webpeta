@@ -20,6 +20,7 @@
     <style>
         .pln-blue { background-color: #003380; }
         .pln-blue-text { color: #003380; }
+        .tosca-header { background-color: #1a9c79; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 p-4 md:p-6" x-data="spkluApp()">
@@ -127,7 +128,8 @@
         <!-- Tab 2: Tren Pemakaian -->
         <div x-show="activeTab === 'tren'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">TREN PEMAKAIAN KWH SPKLU</div><div class="p-4 h-80"><canvas id="trendKwhChart"></canvas></div></div>
-            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">TREN KALI TRANSAKSI SPKLU</div><div class="p-4 h-80"><canvas id="trendTrxChart"></canvas></div></div>
+            <!-- Header Tren Kali Transaksi diubah menjadi hijau tosca (#1a9c79) -->
+            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="tosca-header text-white p-3 font-bold text-center text-sm">TREN KALI TRANSAKSI SPKLU</div><div class="p-4 h-80"><canvas id="trendTrxChart"></canvas></div></div>
         </div>
 
         <!-- Tab 3: Peta Sebaran -->
@@ -243,16 +245,17 @@
                             const curMonth = months[new Date().getMonth()];
                             const years = trend.map(r => `s.d ${curMonth} ${r.Tahun}`);
 
-                            // Warna grafik batang pada tab Tren Pemakaian disamakan dengan warna header (#003380)
+                            // Warna grafik batang Tren Pemakaian kWh (Hijau Tosca: #1a9c79)
                             new Chart(document.getElementById('trendKwhChart'), {
                                 type: 'bar',
-                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#003380' }] },
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#1a9c79' }] },
                                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
                             });
 
+                            // Warna grafik batang Tren Kali Transaksi & perbaikan variabel r.Total_Transaksi (Hijau Tosca: #1a9c79)
                             new Chart(document.getElementById('trendTrxChart'), {
                                 type: 'bar',
-                                data: { labels: years, datasets: [{ data: trend.map(r => Total_Transaksi), backgroundColor: '#003380' }] }, // Diperbaiki dari trend.map(r => r.Total_Transaksi) menyesuaikan skrip sumber asli
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
                                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
                             });
                         }
