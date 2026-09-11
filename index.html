@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard SPKLU PLN</title>
+    <title>Dashboard SPKLU PLN UID Kalbar</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,41 +18,56 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
     <style>
-        .pln-blue { background-color: #005a9c; }
-        .pln-blue-text { color: #005a9c; }
+        .pln-blue { background-color: #003380; }
+        .pln-blue-text { color: #003380; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 p-4 md:p-6" x-data="spkluApp()">
 
-    <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
         
-        <!-- 1. Header & KPI -->
-        <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-[#005a9c] pb-6 mb-6 gap-4">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-bold pln-blue-text">PETA & TRANSAKSI</h1>
-                <h1 class="text-2xl md:text-3xl font-bold pln-blue-text">SPKLU PLN</h1>
+        <!-- Header Baru dengan Latar Belakang Gradasi & Info Periode -->
+        <div class="bg-gradient-to-r from-blue-50 via-sky-50 to-white border border-blue-100 rounded-xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-6 shadow-sm">
+            <!-- Sisi Kiri: Judul & Badge Periode -->
+            <div class="space-y-3 text-center lg:text-left">
+                <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight pln-blue-text">
+                    PETA & TRANSAKSI<br>SPKLU PLN UID KALBAR
+                </h1>
+                <div class="inline-block bg-[#003380] text-white text-xs md:text-sm font-bold px-4 py-1.5 rounded-full shadow">
+                    PERIODE: 1 JANUARI - 31 AGUSTUS 2026
+                </div>
             </div>
-            <div class="flex flex-wrap gap-4 text-center">
-                <div class="px-4 border-l border-gray-300">
-                    <p class="text-xs text-gray-500 font-semibold">TOTAL kWh</p>
-                    <p class="text-2xl font-bold pln-blue-text" x-text="kpiKwh">0</p>
+
+            <!-- Sisi Kanan: Kartu Statistik / KPI -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center w-full lg:w-auto">
+                <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
+                    <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL kWh</p>
+                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiKwh">0</p>
+                    <span class="text-[10px] text-gray-400">kWh</span>
                 </div>
-                <div class="px-4 border-l border-gray-300">
-                    <p class="text-xs text-gray-500 font-semibold">TOTAL TRANSAKSI</p>
-                    <p class="text-2xl font-bold pln-blue-text" x-text="kpiTrx">0</p>
+                <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
+                    <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL TRANSAKSI</p>
+                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiTrx">0</p>
+                    <span class="text-[10px] text-gray-400">kali</span>
                 </div>
-                <div class="px-4 border-l border-gray-300">
-                    <p class="text-xs text-gray-500 font-semibold">TOTAL MESIN SPKLU</p>
-                    <p class="text-2xl font-bold pln-blue-text" x-text="kpiSpklu">0</p>
+                <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
+                    <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL SPKLU</p>
+                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiSpklu">0</p>
+                    <span class="text-[10px] text-gray-400">lokasi</span>
+                </div>
+                <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
+                    <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL CHARGER</p>
+                    <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiSpklu">0</p>
+                    <span class="text-[10px] text-gray-400">charger</span>
                 </div>
             </div>
         </div>
 
-        <!-- 2. Navigasi Tab (Hanya 3 Tab) -->
-        <div class="flex gap-2 mb-6 flex-wrap">
-            <button @click="activeTab = 'r4'" :class="activeTab === 'r4' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Transaksi R4</button>
-            <button @click="activeTab = 'tren'; loadTren()" :class="activeTab === 'tren' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Tren Pemakaian</button>
-            <button @click="activeTab = 'peta'; setTimeout(() => map.invalidateSize(), 100)" :class="activeTab === 'peta' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Peta</button>
+        <!-- 2. Navigasi Tab -->
+        <div class="flex gap-2 flex-wrap">
+            <button @click="activeTab = 'r4'" :class="activeTab === 'r4' ? 'bg-[#003380] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition text-sm">Transaksi R4</button>
+            <button @click="activeTab = 'tren'; loadTren()" :class="activeTab === 'tren' ? 'bg-[#003380] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition text-sm">Tren Pemakaian</button>
+            <button @click="activeTab = 'peta'; setTimeout(() => map.invalidateSize(), 100)" :class="activeTab === 'peta' ? 'bg-[#003380] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition text-sm">Peta</button>
         </div>
 
         <!-- Tab 1: Transaksi R4 -->
@@ -68,20 +83,20 @@
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#005a9c] text-white p-3 font-bold text-center">TOP 10 TERTINGGI PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="topChart"></canvas></div></div>
-                <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-green-700 text-white p-3 font-bold text-center">BOTTOM 10 PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="bottomChart"></canvas></div></div>
+                <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">TOP 10 TERTINGGI PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="topChart"></canvas></div></div>
+                <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-green-700 text-white p-3 font-bold text-center text-sm">BOTTOM 10 PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="bottomChart"></canvas></div></div>
             </div>
         </div>
 
         <!-- Tab 2: Tren Pemakaian -->
         <div x-show="activeTab === 'tren'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#005a9c] text-white p-3 font-bold text-center">TREN PEMAKAIAN KWH SPKLU</div><div class="p-4 h-80"><canvas id="trendKwhChart"></canvas></div></div>
-            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-teal-700 text-white p-3 font-bold text-center">TREN KALI TRANSAKSI SPKLU</div><div class="p-4 h-80"><canvas id="trendTrxChart"></canvas></div></div>
+            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">TREN PEMAKAIAN KWH SPKLU</div><div class="p-4 h-80"><canvas id="trendKwhChart"></canvas></div></div>
+            <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-teal-700 text-white p-3 font-bold text-center text-sm">TREN KALI TRANSAKSI SPKLU</div><div class="p-4 h-80"><canvas id="trendTrxChart"></canvas></div></div>
         </div>
 
         <!-- Tab 3: Peta Sebaran -->
         <div x-show="activeTab === 'peta'" class="border rounded-xl overflow-hidden shadow-sm">
-            <div class="bg-[#005a9c] text-white p-3 font-bold text-center">PETA SEBARAN SPKLU</div>
+            <div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">PETA SEBARAN SPKLU</div>
             <div class="p-4">
                 <div id="map" class="w-full h-[500px] rounded-lg"></div>
                 <div class="flex justify-center gap-6 mt-4 text-xs font-bold">
