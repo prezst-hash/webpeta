@@ -26,7 +26,7 @@
 
     <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-md space-y-6">
         
-        <!-- Header Baru dengan Latar Belakang Gradasi & Info Periode -->
+        <!-- Header: Latar Belakang Gradasi & Info Periode -->
         <div class="bg-gradient-to-r from-blue-50 via-sky-50 to-white border border-blue-100 rounded-xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-6 shadow-sm">
             <!-- Sisi Kiri: Judul & Badge Periode -->
             <div class="space-y-3 text-center lg:text-left">
@@ -34,7 +34,7 @@
                     PETA & TRANSAKSI<br>SPKLU PLN UID KALBAR
                 </h1>
                 <div class="inline-block bg-[#003380] text-white text-xs md:text-sm font-bold px-4 py-1.5 rounded-full shadow">
-                    PERIODE: 1 JANUARI - 31 AGUSTUS 2026
+                    PERIODE: 1 JANUARI - 31 MEI 2026
                 </div>
             </div>
 
@@ -82,9 +82,47 @@
                     <div class="w-40 h-40"><canvas id="trxDonutChart"></canvas></div>
                 </div>
             </div>
+
+            <!-- Top 10 & Bottom 10 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-[#003380] text-white p-3 font-bold text-center text-sm">TOP 10 TERTINGGI PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="topChart"></canvas></div></div>
                 <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-green-700 text-white p-3 font-bold text-center text-sm">BOTTOM 10 PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="bottomChart"></canvas></div></div>
+            </div>
+
+            <!-- Bagian Baru: SPKLU Nihil Transaksi -->
+            <div class="border rounded-xl overflow-hidden shadow-sm bg-white">
+                <div class="bg-red-700 text-white p-3 font-bold text-center text-sm">DAFTAR SPKLU NIHIL TRANSAKSI (0 kWh / Belum Beroperasi)</div>
+                <div class="p-4 overflow-x-auto">
+                    <template x-if="nihilList.length > 0">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-700 border-b">
+                                    <th class="p-3 border">No</th>
+                                    <th class="p-3 border">Nama SPKLU</th>
+                                    <th class="p-3 border">ID Charger</th>
+                                    <th class="p-3 border">Tipe Charger</th>
+                                    <th class="p-3 border text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(row, index) in nihilList" :key="index">
+                                    <tr class="hover:bg-gray-50 border">
+                                        <td class="p-3 border" x-text="index + 1"></td>
+                                        <td class="p-3 border font-bold" x-text="row.Nama_SPKLU"></td>
+                                        <td class="p-3 border" x-text="row.ID_Charger || '-'"></td>
+                                        <td class="p-3 border" x-text="row.Tipe_Charger || '-'"></td>
+                                        <td class="p-3 border text-center">
+                                            <span class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full">Nihil / 0 kWh</span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+                    <template x-if="nihilList.length === 0">
+                        <p class="text-center text-gray-500 py-4 italic text-sm">Tidak ada SPKLU yang nihil transaksi. Semua unit aktif mencatat pemakaian.</p>
+                    </template>
+                </div>
             </div>
         </div>
 
@@ -122,6 +160,7 @@
                 kpiSpklu: 0,
                 donutKwhTotal: 0,
                 donutTrxTotal: 0,
+                nihilList: [], // Data penampung SPKLU nihil transaksi
                 map: null,
                 trenLoaded: false,
 
@@ -137,6 +176,9 @@
 
                             let tKwh = 0, tTrx = 0;
                             let r4 = { 'Ultra Fast': {k:0, t:0}, 'Medium': {k:0, t:0}, 'Fast': {k:0, t:0} };
+
+                            // Filter SPKLU yang nihil transaksi (Pemakaian kWh kosong atau 0)
+                            this.nihilList = data.filter(r => !r.Pemakaian_kWh || r.Pemakaian_kWh === 0);
 
                             data.forEach(row => {
                                 tKwh += row.Pemakaian_kWh || 0;
