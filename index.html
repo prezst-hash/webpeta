@@ -300,18 +300,49 @@
                     this.showModal = true;
                 },
 
-                handleFileSelect(event, type) {
+handleFileSelect(event, type) {
                     const file = event.target.files[0];
                     if (file) {
                         const reader = new FileReader();
                         reader.onload = (e) => {
-                            if (type === 'lokasi') {
-                                this.previewLokasi = e.target.result;
-                                this.base64Lokasi = e.target.result;
-                            } else {
-                                this.previewMesin = e.target.result;
-                                this.base64Mesin = e.target.result;
-                            }
+                            const img = new Image();
+                            img.src = e.target.result;
+                            img.onload = () => {
+                                // Proses Kompresi Ukuran Gambar (Maksimal lebar/tinggi 1000px)
+                                const canvas = document.createElement('canvas');
+                                const MAX_WIDTH = 1000;
+                                const MAX_HEIGHT = 1000;
+                                let width = img.width;
+                                let height = img.height;
+
+                                if (width > height) {
+                                    if (width > MAX_WIDTH) {
+                                        height *= MAX_WIDTH / width;
+                                        width = MAX_WIDTH;
+                                    }
+                                } else {
+                                    if (height > MAX_HEIGHT) {
+                                        width *= MAX_HEIGHT / height;
+                                        height = MAX_HEIGHT;
+                                    }
+                                }
+
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+
+                                // Kompres kualitas ke 0.7 (70%) agar file menjadi kecil (kilobyte)
+                                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                                if (type === 'lokasi') {
+                                    this.previewLokasi = compressedDataUrl;
+                                    this.base64Lokasi = compressedDataUrl;
+                                } else {
+                                    this.previewMesin = compressedDataUrl;
+                                    this.base64Mesin = compressedDataUrl;
+                                }
+                            };
                         };
                         reader.readAsDataURL(file);
                     }
@@ -326,6 +357,7 @@
 
                     const formData = new FormData();
                     formData.append("rowIndex", this.selectedIndex + 2);
+                    formData.append("nama", this.selectedRow.Nama_SPKLU); // Mengirim nama SPKLU untuk penamaan file
                     formData.append("type", type);
                     formData.append("file", fileData);
 
@@ -335,7 +367,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
-                        alert("Foto berhasil disimpan ke Google Drive & Sheets!");
+                        alert("Foto berhasil dikompres, disimpan ke Google Drive & Sheets!");
                         if (type === 'lokasi') {
                             this.selectedRow.Foto_Lokasi = this.base64Lokasi;
                             this.uploadingLoc = false;
