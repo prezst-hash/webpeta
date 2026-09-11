@@ -48,12 +48,11 @@
             </div>
         </div>
 
-        <!-- 2. Navigasi Tab -->
+        <!-- 2. Navigasi Tab (Hanya 3 Tab) -->
         <div class="flex gap-2 mb-6 flex-wrap">
             <button @click="activeTab = 'r4'" :class="activeTab === 'r4' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Transaksi R4</button>
             <button @click="activeTab = 'tren'; loadTren()" :class="activeTab === 'tren' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Tren Pemakaian</button>
             <button @click="activeTab = 'peta'; setTimeout(() => map.invalidateSize(), 100)" :class="activeTab === 'peta' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Peta</button>
-            <button @click="activeTab = 'monitoring'" :class="activeTab === 'monitoring' ? 'bg-[#005a9c] text-white' : 'bg-gray-200 text-gray-700'" class="px-4 py-2 font-bold rounded-lg transition">Monitoring SPKLU</button>
         </div>
 
         <!-- Tab 1: Transaksi R4 -->
@@ -93,84 +92,10 @@
             </div>
         </div>
 
-        <!-- Tab 4: Monitoring SPKLU -->
-        <div x-show="activeTab === 'monitoring'" class="border rounded-xl overflow-hidden shadow-sm">
-            <div class="bg-green-700 text-white p-3 font-bold text-center">MONITORING DATA & FOTO SPKLU</div>
-            <div class="p-4 overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-[#005a9c] text-white">
-                            <th class="p-3 border">No</th>
-                            <th class="p-3 border">Nama SPKLU</th>
-                            <th class="p-3 border">Tipe Charger</th>
-                            <th class="p-3 border">Foto Lokasi</th>
-                            <th class="p-3 border">Foto Mesin</th>
-                            <th class="p-3 border text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="(row, index) in spkluList" :key="index">
-                            <tr class="hover:bg-gray-50 border">
-                                <td class="p-3 border" x-text="index + 1"></td>
-                                <td class="p-3 border font-bold" x-text="row.Nama_SPKLU"></td>
-                                <td class="p-3 border" x-text="row.Tipe_Charger || '-'"></td>
-                                <td class="p-3 border">
-                                    <template x-if="row.Foto_Lokasi"><img :src="row.Foto_Lokasi" class="w-12 h-12 object-cover rounded border"></template>
-                                    <template x-if="!row.Foto_Lokasi"><span class="text-xs text-gray-400 italic">Belum ada foto</span></template>
-                                </td>
-                                <td class="p-3 border">
-                                    <template x-if="row.Foto_Mesin"><img :src="row.Foto_Mesin" class="w-12 h-12 object-cover rounded border"></template>
-                                    <template x-if="!row.Foto_Mesin"><span class="text-xs text-gray-400 italic">Belum ada foto</span></template>
-                                </td>
-                                <td class="p-3 border text-center">
-                                    <button @click="openModal(index)" class="bg-[#005a9c] hover:bg-blue-800 text-white px-3 py-1.5 rounded text-xs font-bold transition">Detail / Edit</button>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Modal Pop-up (Alpine.js State) -->
-    <div x-show="showModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div @click.outside="showModal = false" class="bg-white w-full max-w-lg rounded-xl overflow-hidden shadow-2xl">
-            <div class="bg-[#005a9c] text-white p-4 font-bold flex justify-between items-center">
-                <span x-text="selectedRow.Nama_SPKLU"></span>
-                <button @click="showModal = false" class="text-xl font-bold">&times;</button>
-            </div>
-            <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-sm">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><span class="text-xs text-gray-500 font-bold block">ID CHARGER</span><div class="bg-gray-50 p-2 border rounded" x-text="selectedRow.ID_Charger || '-'"></div></div>
-                    <div><span class="text-xs text-gray-500 font-bold block">TIPE CHARGER</span><div class="bg-gray-50 p-2 border rounded" x-text="selectedRow.Tipe_Charger || '-'"></div></div>
-                    <div><span class="text-xs text-gray-500 font-bold block">PEMAKAIAN KWH</span><div class="bg-gray-50 p-2 border rounded" x-text="(selectedRow.Pemakaian_kWh || 0) + ' kWh'"></div></div>
-                    <div><span class="text-xs text-gray-500 font-bold block">TOTAL TRANSAKSI</span><div class="bg-gray-50 p-2 border rounded" x-text="(selectedRow.Total_Transaksi || 0) + ' kali'"></div></div>
-                </div>
-                <div class="border-t pt-4 grid grid-cols-2 gap-4 text-center">
-                    <div>
-                        <p class="text-xs font-bold mb-1">Foto Lokasi</p>
-                        <img :src="previewLokasi || selectedRow.Foto_Lokasi || 'https://via.placeholder.com/150?text=Belum+Ada+Foto'" class="w-full h-32 object-cover rounded border mb-2">
-                        <input type="file" accept="image/*" class="hidden" id="fileLoc" @change="handleFileSelect($event, 'lokasi')">
-                        <button @click="document.getElementById('fileLoc').click()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-1.5 px-3 rounded w-full mb-1">Pilih Foto</button>
-                        <button x-show="base64Lokasi" @click="uploadToDrive('lokasi')" class="bg-green-700 hover:bg-green-800 text-white text-xs font-bold py-1.5 px-3 rounded w-full" x-text="uploadingLoc ? 'Menyimpan...' : 'Simpan ke Drive'"></button>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold mb-1">Foto Mesin</p>
-                        <img :src="previewMesin || selectedRow.Foto_Mesin || 'https://via.placeholder.com/150?text=Belum+Ada+Foto'" class="w-full h-32 object-cover rounded border mb-2">
-                        <input type="file" accept="image/*" class="hidden" id="fileMach" @change="handleFileSelect($event, 'mesin')">
-                        <button @click="document.getElementById('fileMach').click()" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-1.5 px-3 rounded w-full mb-1">Pilih Foto</button>
-                        <button x-show="base64Mesin" @click="uploadToDrive('mesin')" class="bg-green-700 hover:bg-green-800 text-white text-xs font-bold py-1.5 px-3 rounded w-full" x-text="uploadingMach ? 'Menyimpan...' : 'Simpan ke Drive'"></button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Script Logika Alpine.js & Chart.js -->
     <script>
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec';
         const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
         const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
@@ -182,16 +107,6 @@
                 kpiSpklu: 0,
                 donutKwhTotal: 0,
                 donutTrxTotal: 0,
-                spkluList: [],
-                showModal: false,
-                selectedIndex: null,
-                selectedRow: {},
-                previewLokasi: null,
-                previewMesin: null,
-                base64Lokasi: null,
-                base64Mesin: null,
-                uploadingLoc: false,
-                uploadingMach: false,
                 map: null,
                 trenLoaded: false,
 
@@ -203,7 +118,6 @@
                         download: true, header: true, dynamicTyping: true,
                         complete: (results) => {
                             const data = results.data.filter(r => r.Nama_SPKLU);
-                            this.spkluList = data;
                             this.kpiSpklu = data.length;
 
                             let tKwh = 0, tTrx = 0;
@@ -286,108 +200,6 @@
                                 data: { labels: years, datasets: [{ data: trend.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
                                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
                             });
-                        }
-                    });
-                },
-
-                openModal(index) {
-                    this.selectedIndex = index;
-                    this.selectedRow = this.spkluList[index];
-                    this.previewLokasi = null;
-                    this.previewMesin = null;
-                    this.base64Lokasi = null;
-                    this.base64Mesin = null;
-                    this.showModal = true;
-                },
-
-handleFileSelect(event, type) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            const img = new Image();
-                            img.src = e.target.result;
-                            img.onload = () => {
-                                // Proses Kompresi Ukuran Gambar (Maksimal lebar/tinggi 1000px)
-                                const canvas = document.createElement('canvas');
-                                const MAX_WIDTH = 1000;
-                                const MAX_HEIGHT = 1000;
-                                let width = img.width;
-                                let height = img.height;
-
-                                if (width > height) {
-                                    if (width > MAX_WIDTH) {
-                                        height *= MAX_WIDTH / width;
-                                        width = MAX_WIDTH;
-                                    }
-                                } else {
-                                    if (height > MAX_HEIGHT) {
-                                        width *= MAX_HEIGHT / height;
-                                        height = MAX_HEIGHT;
-                                    }
-                                }
-
-                                canvas.width = width;
-                                canvas.height = height;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, width, height);
-
-                                // Kompres kualitas ke 0.7 (70%) agar file menjadi kecil (kilobyte)
-                                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
-                                if (type === 'lokasi') {
-                                    this.previewLokasi = compressedDataUrl;
-                                    this.base64Lokasi = compressedDataUrl;
-                                } else {
-                                    this.previewMesin = compressedDataUrl;
-                                    this.base64Mesin = compressedDataUrl;
-                                }
-                            };
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                },
-
-                uploadToDrive(type) {
-                    const fileData = type === 'lokasi' ? this.base64Lokasi : this.base64Mesin;
-                    if (!fileData) return;
-
-                    if (type === 'lokasi') this.uploadingLoc = true;
-                    else this.uploadingMach = true;
-
-                    const formData = new FormData();
-                    formData.append("rowIndex", this.selectedIndex + 2);
-                    formData.append("nama", this.selectedRow.Nama_SPKLU); // Mengirim nama SPKLU untuk penamaan file
-                    formData.append("type", type);
-                    formData.append("file", fileData);
-
-                    fetch(GAS_URL, {
-                        method: "POST",
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert("Foto berhasil dikompres, disimpan ke Google Drive & Sheets!");
-                        if (type === 'lokasi') {
-                            this.selectedRow.Foto_Lokasi = this.base64Lokasi;
-                            this.uploadingLoc = false;
-                            this.base64Lokasi = null;
-                        } else {
-                            this.selectedRow.Foto_Mesin = this.base64Mesin;
-                            this.uploadingMach = false;
-                            this.base64Mesin = null;
-                        }
-                    })
-                    .catch(err => {
-                        alert("Proses simpan selesai. Silakan cek spreadsheet.");
-                        if (type === 'lokasi') {
-                            this.selectedRow.Foto_Lokasi = this.base64Lokasi;
-                            this.uploadingLoc = false;
-                            this.base64Lokasi = null;
-                        } else {
-                            this.selectedRow.Foto_Mesin = this.base64Mesin;
-                            this.uploadingMach = false;
-                            this.base64Mesin = null;
                         }
                     });
                 }
