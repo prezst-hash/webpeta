@@ -170,7 +170,7 @@
 
     <!-- Script Logika Alpine.js & Chart.js -->
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec";
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyngzWGmP04zVnzbBCEGDHj-Z92QzrAw5YzBV3rU9hZXJ9TXFzCLkVmRLEWS9XVRDHGRw/exec';
         const csvUrlSheet1 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=0&single=true&output=csv';
         const csvUrlSheet2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUOyLOQmEVYOidaszXGbvhCiYh3uJw_b2nzra-xm7n7CHysH0P-SLoU_hWJ3Q1TmLWheS1eGvAD-8A/pub?gid=497966174&single=true&output=csv';
 
@@ -196,11 +196,9 @@
                 trenLoaded: false,
 
                 init() {
-                    // Inisialisasi Peta Leaflet
                     this.map = L.map('map').setView([-0.0227, 109.3346], 7);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(this.map);
 
-                    // Ambil Data Sheet 1
                     Papa.parse(csvUrlSheet1, {
                         download: true, header: true, dynamicTyping: true,
                         complete: (results) => {
@@ -229,7 +227,6 @@
                             this.donutKwhTotal = this.kpiKwh;
                             this.donutTrxTotal = this.kpiTrx;
 
-                            // Render Donut & Bar Charts
                             this.renderCharts(r4, data);
                         }
                     });
@@ -320,14 +317,13 @@
                     }
                 },
 
-uploadToDrive(type) {
+                uploadToDrive(type) {
                     const fileData = type === 'lokasi' ? this.base64Lokasi : this.base64Mesin;
                     if (!fileData) return;
 
                     if (type === 'lokasi') this.uploadingLoc = true;
                     else this.uploadingMach = true;
 
-                    // Menggunakan FormData agar terbaca dengan sempurna oleh Google Apps Script
                     const formData = new FormData();
                     formData.append("rowIndex", this.selectedIndex + 2);
                     formData.append("type", type);
@@ -351,7 +347,6 @@ uploadToDrive(type) {
                         }
                     })
                     .catch(err => {
-                        // Meskipun kadang merespon catch karena pembatasan CORS redirect Google, data biasanya sudah masuk
                         alert("Proses simpan selesai. Silakan cek spreadsheet.");
                         if (type === 'lokasi') {
                             this.selectedRow.Foto_Lokasi = this.base64Lokasi;
