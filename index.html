@@ -28,17 +28,15 @@
         
         <!-- Header: Latar Belakang Gradasi & Info Periode -->
         <div class="bg-gradient-to-r from-blue-50 via-sky-50 to-white border border-blue-100 rounded-xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-6 shadow-sm">
-            <!-- Sisi Kiri: Judul & Badge Periode -->
             <div class="space-y-3 text-center lg:text-left">
                 <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight pln-blue-text">
                     PETA & TRANSAKSI<br>SPKLU PLN UID KALBAR
                 </h1>
                 <div class="inline-block bg-[#003380] text-white text-xs md:text-sm font-bold px-4 py-1.5 rounded-full shadow">
-                    PERIODE: 1 JANUARI - 31 MEI 2026
+                    PERIODE: 1 JANUARI - 31 AGUSTUS 2026
                 </div>
             </div>
 
-            <!-- Sisi Kanan: Kartu Statistik / KPI -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center w-full lg:w-auto">
                 <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
                     <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL kWh</p>
@@ -51,7 +49,7 @@
                     <span class="text-[10px] text-gray-400">kali</span>
                 </div>
                 <div class="bg-white/80 backdrop-blur p-3 rounded-lg border border-blue-100 shadow-sm">
-                    <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL SPKLU</p>
+                    <p class="text-[11px] text-gray-500 font-bold uppercase">TOTAL LOKASI</p>
                     <p class="text-lg md:text-xl font-extrabold pln-blue-text" x-text="kpiSpklu">0</p>
                     <span class="text-[10px] text-gray-400">lokasi</span>
                 </div>
@@ -73,7 +71,7 @@
         <!-- Tab 1: Transaksi R4 -->
         <div x-show="activeTab === 'r4'" class="space-y-6">
             <div class="border-2 border-blue-200 rounded-xl p-4 bg-white relative">
-                <div class="absolute -top-3 left-4 bg-[#003380] text-white text-xs font-bold px-4 py-1 rounded-r-full">TRANSAKSI SPKLU R4</div>
+                <div class="absolute -top-3 left-4 bg-[#003380] text-white text-xs font-bold px-4 py-1 rounded-r-full">TRANSAKSI SPKLU</div>
                 <div class="flex flex-col lg:flex-row items-center justify-around gap-6 pt-4">
                     <div class="text-center"><p class="bg-teal-700 text-white text-xs font-bold px-2 py-1 rounded inline-block mb-2">TOTAL KWh</p><p class="text-2xl font-bold text-blue-900" x-text="donutKwhTotal">0</p><p class="text-sm text-blue-900">kWh</p></div>
                     <div class="w-40 h-40"><canvas id="kwhDonutChart"></canvas></div>
@@ -89,7 +87,7 @@
                 <div class="border rounded-xl overflow-hidden shadow-sm"><div class="bg-green-700 text-white p-3 font-bold text-center text-sm">BOTTOM 10 PEMAKAIAN KWH</div><div class="p-4 h-96"><canvas id="bottomChart"></canvas></div></div>
             </div>
 
-            <!-- Bagian Baru: SPKLU Nihil Transaksi -->
+            <!-- SPKLU Nihil Transaksi -->
             <div class="border rounded-xl overflow-hidden shadow-sm bg-white">
                 <div class="bg-red-700 text-white p-3 font-bold text-center text-sm">DAFTAR SPKLU NIHIL TRANSAKSI (0 kWh / Belum Beroperasi)</div>
                 <div class="p-4 overflow-x-auto">
@@ -160,7 +158,7 @@
                 kpiSpklu: 0,
                 donutKwhTotal: 0,
                 donutTrxTotal: 0,
-                nihilList: [], // Data penampung SPKLU nihil transaksi
+                nihilList: [],
                 map: null,
                 trenLoaded: false,
 
@@ -177,7 +175,6 @@
                             let tKwh = 0, tTrx = 0;
                             let r4 = { 'Ultra Fast': {k:0, t:0}, 'Medium': {k:0, t:0}, 'Fast': {k:0, t:0} };
 
-                            // Filter SPKLU yang nihil transaksi (Pemakaian kWh kosong atau 0)
                             this.nihilList = data.filter(r => !r.Pemakaian_kWh || r.Pemakaian_kWh === 0);
 
                             data.forEach(row => {
@@ -246,15 +243,16 @@
                             const curMonth = months[new Date().getMonth()];
                             const years = trend.map(r => `s.d ${curMonth} ${r.Tahun}`);
 
+                            // Warna grafik batang disesuaikan dengan warna header (#003380)
                             new Chart(document.getElementById('trendKwhChart'), {
                                 type: 'bar',
-                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#26a69a' }] },
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Pemakaian_kWh), backgroundColor: '#003380' }] },
                                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
                             });
 
                             new Chart(document.getElementById('trendTrxChart'), {
                                 type: 'bar',
-                                data: { labels: years, datasets: [{ data: trend.map(r => r.Total_Transaksi), backgroundColor: '#1a9c79' }] },
+                                data: { labels: years, datasets: [{ data: trend.map(r => r.Total_Transaksi), backgroundColor: '#003380' }] },
                                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', formatter: v => v.toLocaleString('id-ID'), font:{size:10} } }, scales: { x:{grid:{display:false}}, y:{display:false, suggestedMax: c => Math.max(...c.chart.data.datasets[0].data)*1.2} } }
                             });
                         }
